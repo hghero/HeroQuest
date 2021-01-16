@@ -1,0 +1,7 @@
+1
+
+TREASURE_CARD_POWER_POTION
+
+You find a small, bloody-red bottle. It is a power potion. You can drink it at any time to throw two combat dice in addition during your next attack.
+
+POWER_POTION

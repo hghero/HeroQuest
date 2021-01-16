@@ -1,0 +1,7 @@
+1
+
+TREASURE_CARD_GOLD
+
+Poor prize: you find 10 gold coins in a stinky, well-worn vest.
+
+GOLD <10>

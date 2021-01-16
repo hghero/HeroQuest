@@ -1,0 +1,7 @@
+1
+
+TREASURE_CARD_TRAP_WALL
+
+While searching, you accidentally trigger a spring arrow which hisses out of a wall. It causes a damage of 1 life point.
+
+LIFE_POINTS <-1>

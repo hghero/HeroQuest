@@ -1,0 +1,7 @@
+1
+
+TREASURE_CARD_SPRINT_POTION
+
+You find a sprint potion in a dusty bottle on some shelf. If you drink it, it speeds you up: you throw twice as much dice for your next movement.
+
+SPRINT_POTION

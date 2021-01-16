@@ -1,0 +1,8 @@
+1
+
+TREASURE_CARD_GOLD
+
+You search and find several gold coins scattered among the whole room. Gathering takes some time, requiring you to skip the next round.
+
+GOLD <MOVEMENT_DICE * 10>
+ROUND <SKIP = 1>

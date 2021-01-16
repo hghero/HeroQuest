@@ -1,0 +1,7 @@
+1
+
+TREASURE_CARD_GEMSTONE
+
+In the tip of an old boot you find a gemstone which is worth 50 gold coins.
+
+GOLD <50>

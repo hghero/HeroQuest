@@ -1,0 +1,7 @@
+1
+
+TREASURE_CARD_HOLY_WATER
+
+In a corner of the room you find a lost vial of holy water. You can spray it instead of attacking: it kills any undead creature (skeletons, zombies, mummies).
+
+HOLY_WATER

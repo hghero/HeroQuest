@@ -1,0 +1,7 @@
+2
+
+TREASURE_CARD_HEALING_POTION
+
+Under a bunch of bounder you find a bottle of healing potion. You can drink it at any time to regain up to 4 lost life points.
+
+HEALING_POTION

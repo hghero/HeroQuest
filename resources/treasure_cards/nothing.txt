@@ -1,0 +1,5 @@
+1
+
+TREASURE_CARD_NOTHING
+
+Despite an intensive search you find just nothing.

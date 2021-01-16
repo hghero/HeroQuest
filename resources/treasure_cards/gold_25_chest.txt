@@ -1,0 +1,7 @@
+1
+
+TREASURE_CARD_GOLD
+
+You find an exposed and unprotected chest containing 25 gold coins.
+
+GOLD <25>

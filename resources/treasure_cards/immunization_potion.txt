@@ -1,0 +1,7 @@
+1
+
+TREASURE_CARD_IMMUNIZATION_POTION
+
+In between emtpy bottle and jars you find a small bottle containing an immunization potion. You can drink it at any time to throw two additional combat dice during your next defence.
+
+IMMUNIZATION_POTION

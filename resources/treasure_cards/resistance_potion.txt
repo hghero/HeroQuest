@@ -1,0 +1,7 @@
+1
+
+TREASURE_CARD_RESISTANCE_POTION
+
+Under a rusty shield you find a small bottle. When you become affected by a spell, you can drink the potion to render the spell ineffective.
+
+RESISTANCE_POTION

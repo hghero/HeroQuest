@@ -1,0 +1,7 @@
+1
+
+TREASURE_CARD_GOLD
+
+In between dirty bounder, greasy fur robes and blotty blankets you find 25 gold coins.
+
+GOLD <25>

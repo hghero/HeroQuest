@@ -1,0 +1,7 @@
+1
+
+TREASURE_CARD_GOLD_TREASURE
+
+You are unbelievably lucky: beneath a scuffy carpet, you find 100 gold coins.
+
+GOLD <100>

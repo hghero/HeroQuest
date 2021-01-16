@@ -1,0 +1,7 @@
+1
+
+TREASURE_CARD_JEWELS
+
+You find a small, wooden chest. It seems bare and unimposing. But opening it, you find gleaming jewels on blue velvet, worth 50 gold coins.
+
+GOLD <50>

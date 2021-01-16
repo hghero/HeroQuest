@@ -1,0 +1,7 @@
+1
+
+TREASURE_CARD_TRAP_PIT
+
+The stones below you drop off. Too late you realize you are trapped: you fall into the pit and lose 1 life point.
+
+LIFE_POINTS <-1>

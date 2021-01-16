@@ -1,0 +1,7 @@
+1
+
+TREASURE_CARD_GOLD
+
+Rifling through the pockets of several clothes, you find altogether 20 gold coins.
+
+GOLD <20>

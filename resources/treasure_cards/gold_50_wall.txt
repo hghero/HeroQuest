@@ -1,0 +1,7 @@
+1
+
+TREASURE_CARD_GOLD
+
+Behind a loose wall brick you find a leather pouch. You look inside and find 50 gold coins.
+
+GOLD <50>

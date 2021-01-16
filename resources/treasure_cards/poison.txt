@@ -1,0 +1,7 @@
+1
+
+TREASURE_CARD_POISON
+
+You drink from a rusty-brown bottle and find out it is poison! Throw a combat dice: if you throw a skull, you lose 1 life point.
+
+LIFE_POINTS <COMBAT_DICE != SKULL ? -1 : 0>

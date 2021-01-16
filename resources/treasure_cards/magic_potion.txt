@@ -1,0 +1,7 @@
+1
+
+TREASURE_CARD_MAGIC_POTION
+
+You discover a vial containing a silver liquid under a loose floor tile. If you are the Magician or the Alb, you can drink the potion at the very beginning of your turn, making you able to cast two instead of just one spell during that turn.
+
+MAGIC_POTION

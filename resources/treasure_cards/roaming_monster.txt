@@ -1,0 +1,7 @@
+5
+
+TREASURE_CARD_ROAMING_MONSTER
+
+While completely concentrating on the search, a monster approaches and immediately attacks you.
+
+ROAMING_MONSTER

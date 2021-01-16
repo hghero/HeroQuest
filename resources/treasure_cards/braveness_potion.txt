@@ -1,0 +1,7 @@
+1
+
+TREASURE_CARD_BRAVENESS_POTION
+
+At the wall you see a leather sleeve containing a potion of braveness. You can drink it just before you attack someone. The potion then enables you to execute two attacks in this round instead of just one.
+
+BRAVENESS_POTION

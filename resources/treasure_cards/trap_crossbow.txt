@@ -1,0 +1,7 @@
+1
+
+TREASURE_CARD_TRAP_WALL
+
+You feel the gentle touch of a subtle wire at your knee. You shift back, but too late: the bolt from a hidden crossbow hits you, taking 1 life point.
+
+LIFE_POINTS <-1>
