@@ -11,6 +11,7 @@
 #include <QtGui/QPainter>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QScreen>
+#include <QtWidgets/QScrollArea>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QLayout>
@@ -27,6 +28,7 @@
 #include "Playground.h"
 #include "Monster.h"
 #include "DialogOkCancel.h"
+#include "DialogOk.h"
 #include "TreasureCard.h"
 #include "DialogTreasureCard.h"
 #include "DialogInventory.h"
@@ -34,9 +36,10 @@
 #include "InventoryItem.h"
 #include "Inventory.h"
 #include "StreamUtils.h"
+#include "LayoutHelper.h"
 #include "GameState.h"
 #include "Command.h"
-#include "LevelTheProbation.h"
+#include "Level01TheProbation.h"
 
 using namespace std;
 
@@ -172,11 +175,12 @@ void HeroQuestLevelWindow::createGUIElements()
         QScreen* first_screen = *(QGuiApplication::screens().begin());
         screen_width = first_screen->availableGeometry().width();
         screen_height = first_screen->availableGeometry().height();
+        DVX(("screen width: %d, screen height: %d", screen_width, screen_height));
     }
     const int margin = 5;
 
     // central widget
-    QWidget *central_widget = new QWidget(this);
+    QWidget* central_widget = new QWidget(this);
     setCentralWidget(central_widget);
     central_widget->setStyleSheet("background-color: black;");
     QHBoxLayout* central_widget_layout = new QHBoxLayout;
@@ -238,7 +242,7 @@ void HeroQuestLevelWindow::createGUIElements()
     central_widget_layout->addStretch();
 
     // playground
-    QLabel *playground_pane = new QLabel(central_widget);
+    QLabel* playground_pane = new QLabel(central_widget);
     playground_pane->setFixedWidth(_playground->width());
     QVBoxLayout* playground_layout = new QVBoxLayout;
     playground_layout->setAlignment(Qt::AlignVCenter);
@@ -260,9 +264,10 @@ void HeroQuestLevelWindow::createGUIElements()
     // stretch
     central_widget_layout->addStretch();
 
-    // info pane
-    _info_pane = new QLabel(central_widget);
-    _info_pane->setFixedWidth(info_pane_width);
+    // info pane: info_pane_wrapper => scroll_area => _info_pane
+    QLabel* info_pane_wrapper = new QLabel(central_widget);
+    _info_pane = new QLabel(info_pane_wrapper);
+    _info_pane->setFixedSize(info_pane_width, screen_height);
     QVBoxLayout* info_pane_layout = new QVBoxLayout;
     _info_pane->setLayout(info_pane_layout);
     info_pane_layout->setMargin(0);
@@ -270,8 +275,13 @@ void HeroQuestLevelWindow::createGUIElements()
     _info_pane->setFrameStyle(QFrame::Panel | QFrame::Sunken);
     _info_pane->setStyleSheet("color: rgb(255,0,0) ; border: 1px solid #ff0000 ;");
 #endif
-    _info_pane->setMinimumHeight(info_pane_layout->sizeHint().height());
-    central_widget_layout->addWidget(_info_pane);
+    info_pane_wrapper->setFixedSize(info_pane_width, playground_height);
+    QScrollArea* scroll_area = new QScrollArea(info_pane_wrapper);
+    {
+        scroll_area->setFixedSize(info_pane_width, playground_height);
+        scroll_area->setWidget(_info_pane);
+    }
+    central_widget_layout->addWidget(info_pane_wrapper);
 
     // stretch
     central_widget_layout->addStretch();
@@ -506,6 +516,8 @@ void HeroQuestLevelWindow::removeHeroStatisticPane(Hero* hero)
     }
 
     _info_pane->layout()->removeWidget(hero_statistic_pane);
+    LayoutHelper::removeUselessStretches(_info_pane->layout());
+
     _hero_statistic_panes.erase(it);
     delete hero_statistic_pane;
 }
@@ -883,7 +895,7 @@ Level* HeroQuestLevelWindow::createLevelFromLevelID(GameState::LevelID level_id,
 
     if (level_id == GameState::LEVEL_THE_PROBATION)
     {
-        level = new LevelTheProbation(num_heroes);
+        level = new Level01TheProbation(num_heroes);
     }
     else
     {
@@ -1317,6 +1329,24 @@ void HeroQuestLevelWindow::throwDefendDice(QVariant defender, QVariant num_dice,
     update();
 }
 
+void HeroQuestLevelWindow::execDialogOk(QVariant title, QVariant text)
+{
+    if (!currentThreadIsGUIThread())
+    {
+        int ret_val;
+        QMetaObject::invokeMethod(this, "execDialogOk", Qt::BlockingQueuedConnection, Q_RETURN_ARG(int, ret_val),
+                Q_ARG(QVariant, title), Q_ARG(QVariant, text));
+        return;
+    }
+
+    QString actual_title = title.value<QString>();
+    QString actual_text = text.value<QString>();
+
+    DialogOk* dialog_ok = new DialogOk(actual_title, actual_text);
+    dialog_ok->exec();
+    delete dialog_ok;
+}
+
 int HeroQuestLevelWindow::execDialogOkCancel(QVariant title, QVariant text)
 {
     if (!currentThreadIsGUIThread())
@@ -1516,6 +1546,11 @@ void HeroQuestLevelWindow::addHeroesAccordingToGameState()
     {
         info_pane_layout->removeItem(info_pane_layout->itemAt(0));
     }
+    for (vector<HeroStatisticPane*>::iterator it = _hero_statistic_panes.begin(); it != _hero_statistic_panes.end();
+            ++it)
+    {
+        delete (*it);
+    }
     _hero_statistic_panes.clear();
 
     for (vector<Hero*>::iterator it = _heroes.begin(); it != _heroes.end(); ++it)
@@ -1584,8 +1619,15 @@ void HeroQuestLevelWindow::connectActionButtons()
     connect(HeroQuestLevelWindow::_hero_quest->getButtonPane()->getButton("End Turn"), SIGNAL(clicked()), this, SLOT(endTurnButtonClicked()));
 }
 
+void HeroQuestLevelWindow::exitLevelFinished()
+{
+    DVX(("Level finished successfully!"));
+    _app.exit(EXIT_CODE_LEVEL_FINISHED);
+}
+
 void HeroQuestLevelWindow::exitLost()
 {
+    DVX(("Level lost :-("));
     _app.exit(EXIT_CODE_LOST);
 }
 
@@ -1646,6 +1688,7 @@ void HeroQuestLevelWindow::addHeroStatisticPane(Hero* hero)
     HeroStatisticPane* hero_statistic_pane = new HeroStatisticPane(hero);
     _hero_statistic_panes.push_back(hero_statistic_pane);
     _info_pane->layout()->addWidget(hero_statistic_pane);
+    dynamic_cast<QBoxLayout*>(_info_pane->layout())->addStretch();
     connect(hero_statistic_pane->getInventoryButton(), SIGNAL(clicked()), this, SLOT(inventoryButtonClicked()));
 }
 

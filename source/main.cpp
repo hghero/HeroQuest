@@ -14,7 +14,7 @@
 #include "HeroQuestStartDialog.h"
 #include "HeroQuestNewGameDialog.h"
 #include "HeroQuestLevelWindow.h"
-#include "LevelTheProbation.h"
+#include "Level01TheProbation.h"
 #include "GameState.h"
 #include "SpellCardStorage.h"
 #include "Debug.h"
@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
 
         // TODO: automatically insert all existing levels' names.
         // Note that currently saved games do contain only the current level's name, no list of all (used) levels.
-        game_state._level_names.push_back(LevelTheProbation::prettyClassName());
+        game_state._level_names.push_back(Level01TheProbation::prettyClassName());
 
         bool game_start_conditions_complete = false;
 

@@ -33,6 +33,7 @@ _gold_label(0),
 _weapons_label(0),
 _inventory_button(0)
 {
+    DVX(("new HeroStatisticPane()"));
     _background_image = new QPixmap(BACKGROUND_YELLOW_FILENAME.toUtf8().constData());
     if (!_background_image) {
        DVX(("%s not found or failed to load", qPrintable(BACKGROUND_YELLOW_FILENAME)));
@@ -173,7 +174,7 @@ _inventory_button(0)
 
 HeroStatisticPane::~HeroStatisticPane()
 {
-    // NIX
+    DVX(("delete HeroStatisticPane"));
 }
 
 void HeroStatisticPane::update()

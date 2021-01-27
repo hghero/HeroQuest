@@ -6,6 +6,7 @@
 #include <QtWidgets/QLayout>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QDialogButtonBox>
+#include <QtWidgets/QScrollArea>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QScreen>
 
@@ -51,12 +52,29 @@ DialogLevelBriefing::DialogLevelBriefing(GameState::LevelID level_id)
     space_label->setFixedHeight(10);
     vertical_box_layout->addWidget(space_label);
 
+#if 0
+    // test================================
+    QLabel* text_label2 = new QLabel(description);
+    text_label2->setStyleSheet(HeroQuestLevelWindow::DIALOG_TEXT_BIG_STYLE);
+    text_label2->setAlignment(Qt::AlignCenter);
+    text_label2->setWordWrap(true);
+    text_label2->setMinimumHeight(100);
+
+    QLabel* text_label2_wrapper = new QLabel;
+    text_label2_wrapper->setFixedSize(800, 400);
+    QScrollArea* scroll_area = new QScrollArea(text_label2_wrapper);
+    scroll_area->setWidget(text_label2);
+    scroll_area->setFixedSize(800, 400);
+
+    vertical_box_layout->addWidget(text_label2_wrapper);
+    // test================================
+#else
     QLabel* text_label2 = new QLabel(description);
     text_label2->setStyleSheet(HeroQuestLevelWindow::DIALOG_TEXT_BIG_STYLE);
     text_label2->setAlignment(Qt::AlignCenter);
     text_label2->setWordWrap(true);
     vertical_box_layout->addWidget(text_label2);
-
+#endif
     QLabel* space_label2 = new QLabel();
     space_label2->setFixedHeight(10);
     vertical_box_layout->addWidget(space_label2);

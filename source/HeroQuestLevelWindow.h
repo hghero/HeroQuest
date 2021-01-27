@@ -137,6 +137,7 @@ class HeroQuestLevelWindow : public QMainWindow
     void removeHeroStatisticPane(Hero* hero);
     void startHeroTurn();
 
+    void execDialogOk(QVariant title, QVariant text);
     int execDialogOkCancel(QVariant title, QVariant text);
     void execDialogOpenChest(QVariant treasure_description);
     void execDialogTreasureCard(QVariant treasure_card);
@@ -177,6 +178,7 @@ class HeroQuestLevelWindow : public QMainWindow
 
     QSize getInfoPaneSize() const;
 
+    void exitLevelFinished();
     void exitLost();
 
     protected:

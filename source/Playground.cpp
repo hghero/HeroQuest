@@ -585,6 +585,20 @@ const NodeID* Playground::getCurrentlyActingCreaturePos() const
     return getCreaturePos(current_creature);
 }
 
+/*!
+ * param node_id
+ * @return true iff node_id is on a stairway
+ */
+bool Playground::nodeIsOnStairway(const NodeID& node_id) const
+{
+    map<NodeID, Decoration*>::const_iterator it = _nodes_to_decoration.find(node_id);
+    if (it == _nodes_to_decoration.end())
+        return false;
+
+    const Decoration* decoration = it->second;
+    return dynamic_cast<const Stairs*>(decoration) != 0;
+}
+
 Creature* Playground::getCreature(const NodeID& node_id)
 {
 	Creature* creature = 0;

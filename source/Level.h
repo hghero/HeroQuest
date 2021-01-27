@@ -97,7 +97,8 @@ public:
           _current_monster_idx(UINT_MAX),
           _hero_action_states(),
           _monster_action_states(),
-          _num_turns_left()
+          _num_turns_left(), _heroes_may_exit_level_via_stairway(
+                        false)
         {
             // NIX
         }
@@ -123,6 +124,8 @@ public:
         std::vector<MonsterActionStates> _monster_action_states;
 
         std::vector<uint> _num_turns_left; // hero index => number of turns left (usually 1)
+
+        bool _heroes_may_exit_level_via_stairway;
     };
 
     enum ChestOpenState
@@ -271,8 +274,8 @@ protected:
 	virtual void createDecoration();
     virtual void createChestTreasureDescriptions();
 
-	bool removeMonster(Monster* monster);
-	bool removeHero(Hero* hero);
+    virtual bool removeMonster(Monster* monster);
+    bool removeHero(Hero* hero, bool exit_successfully);
 	void removeTrap(Trap* trap);
 
 	/*!
@@ -319,8 +322,14 @@ protected:
 
 	void handleSpearTrap(SpearTrap* spear_trap);
 
+    bool currentHeroIsOnStairway();
+
 private:
-	bool switchToNextHero();
+    enum SwitchToNextCreatureResult
+    {
+        SWITCHED_TO_HERO = 0, SWITCHED_TO_MONSTER, LEVEL_END
+    };
+    Level::SwitchToNextCreatureResult switchToNextCreature(bool remove_current_hero_from_level);
 
     void shuffleTreasureCardDepositionIntoStock();
     void shuffleTreasureCardStock();

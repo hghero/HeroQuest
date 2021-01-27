@@ -10,6 +10,7 @@ MOC_HEADER = HeroQuestStartDialog.h \
              HintPane.h \
              Playground.h \
              DialogOkCancel.h \
+             DialogOk.h \
              DialogTreasureCard.h \
              DialogOpenChest.h \
              DialogInventory.h \

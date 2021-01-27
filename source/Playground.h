@@ -162,6 +162,8 @@ class Playground : public QLabel
 	bool containsTrap(const NodeID& node_id) const;
 	Trap* getTrap(const NodeID& node_id);
 
+    bool nodeIsOnStairway(const NodeID& node_id) const;
+
 	void computeViewableNodes(const NodeID& node_id, bool respect_target_node_border, std::set<NodeID>* viewable_nodes) const;
 	void computeViewableSecretDoors(const std::set<NodeID>& viewable_nodes, std::vector<SecretDoor*>* viewable_secret_doors) const;
 	void computeViewableTraps(const std::set<NodeID>& viewable_nodes, std::vector<Trap*>* viewable_traps) const;

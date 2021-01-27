@@ -303,6 +303,8 @@ bool Level::LevelState::save(ostream& stream) const
     for (vector<uint>::const_iterator it = _num_turns_left.begin(); it != _num_turns_left.end(); ++it)
         StreamUtils::writeUInt(stream, *it);
 
+    StreamUtils::writeBool(stream, _heroes_may_exit_level_via_stairway);
+
     return !stream.fail();
 }
 
@@ -339,6 +341,8 @@ bool Level::LevelState::load(istream& stream)
         StreamUtils::readUInt(stream, &num);
         _num_turns_left.push_back(num);
     }
+
+    StreamUtils::readBool(stream, &_heroes_may_exit_level_via_stairway);
 
     return !stream.fail();
 }
@@ -981,6 +985,10 @@ void Level::deleteDecoration()
 	_decoration.clear();
 }
 
+/*!
+ * @param monster
+ * @return true iff monster was successfully removed
+ */
 bool Level::removeMonster(Monster* monster)
 {
     HG_ASSERT((monster != 0), "removeMonster: monster is 0");
@@ -1030,7 +1038,16 @@ bool Level::removeMonster(Monster* monster)
     return true;
 }
 
-bool Level::removeHero(Hero* hero)
+/*!
+ * Removes hero from the level. If exit_successfully is false, we check if the hero really dies,
+ * and possible display a game over dialog if no hero is left anymore.
+ * If hero is the currently acting hero, the _level_state._current_hero_idx is invalidated to UINT_MAX.
+ *
+ * @param hero
+ * @param exit_successfully
+ * @return true iff hero was successfully removed from the level
+ */
+bool Level::removeHero(Hero* hero, bool exit_successfully)
 {
     if (_acting_heroes.size() != _level_state._hero_action_states.size() ||
             _acting_heroes.size() != _level_state._num_turns_left.size())
@@ -1043,8 +1060,14 @@ bool Level::removeHero(Hero* hero)
     }
 
     // There are circumstances in which the hero will not yet die.
-    if (!hero->checkDeath())
+    if (!exit_successfully && !hero->checkDeath())
         return false;
+
+    // potentially invalidate _current_hero_idx
+    if (hero == getCurrentlyActingHero())
+    {
+        _level_state._current_hero_idx = UINT_MAX;
+    }
 
     // remove from playground
     HeroQuestLevelWindow::_hero_quest->getPlayground()->removeCreatureFromMaps(hero);
@@ -1076,7 +1099,7 @@ bool Level::removeHero(Hero* hero)
     HeroQuestLevelWindow::_hero_quest->removeHeroStatisticPane(hero);
 
     // if no hero is left, we display "game over" and go back to the startup dialog (i.e. kill the HeroQuestLevelWindow)
-    if (_acting_heroes.empty())
+    if (!exit_successfully && _acting_heroes.empty())
     {
         DialogGameOver dialog_game_over;
         dialog_game_over.exec();
@@ -1092,7 +1115,7 @@ bool Level::removeCreature(Creature* creature)
     bool creature_removed = false;
 
 	if (creature->isHero())
-	    creature_removed = removeHero(dynamic_cast<Hero*>(creature));
+        creature_removed = removeHero(dynamic_cast<Hero*>(creature), false);
 	else if (creature->isMonster())
 	    creature_removed = removeMonster(dynamic_cast<Monster*>(creature));
 
@@ -1390,16 +1413,34 @@ void Level::endHeroTurn()
     HeroQuestLevelWindow::_hero_quest->getPlayground()->getQuestBoard()->clearReachableArea();
     HeroQuestLevelWindow::_hero_quest->getPlayground()->update();
 
-    // switch to next hero
-    if (switchToNextHero())
+    bool remove_current_hero_from_level = false;
+    if (_level_state._heroes_may_exit_level_via_stairway && currentHeroIsOnStairway())
     {
-        startHeroTurn();
+        DVX(
+                ("removing current hero from level, because the level task has been done and the hero stands on the stairway"));
+        remove_current_hero_from_level = true;
     }
-    else
+
+    // switch to next hero (potentially removing the current hero)
+    switch (switchToNextCreature(remove_current_hero_from_level))
     {
-        // if no hero remaining in this round, switch to monsters
-        ExecuteMonsterTurnsCommand cmd;
-        HeroQuestLevelWindow::_hero_quest->execute(cmd);
+        case SWITCHED_TO_HERO:
+        {
+            startHeroTurn();
+        }
+            break;
+
+        case SWITCHED_TO_MONSTER:
+        {
+            // if no hero remaining in this round, switch to monsters
+            ExecuteMonsterTurnsCommand cmd;
+            HeroQuestLevelWindow::_hero_quest->execute(cmd);
+        }
+            break;
+
+        case LEVEL_END:
+            HeroQuestLevelWindow::_hero_quest->exitLevelFinished();
+            break;
     }
 }
 
@@ -1648,7 +1689,7 @@ void Level::delayTurnButtonClicked()
 
     _delayed_heroes.insert(current_hero);
 
-    switchToNextHero();
+    switchToNextCreature(false);
 
 	startHeroTurn();
 }
@@ -1794,17 +1835,60 @@ void Level::handleSpearTrap(SpearTrap* spear_trap)
 }
 
 /*!
+ * @return true iff the currently acting creature is hero and this hero is standing on the stairway
+ */
+bool Level::currentHeroIsOnStairway()
+{
+    Hero* hero = getCurrentlyActingHero();
+    if (hero == 0)
+        return false;
+
+    const NodeID* hero_pos = HeroQuestLevelWindow::_hero_quest->getPlayground()->getCreaturePos(hero);
+    if (hero_pos == 0)
+        return false;
+
+    return HeroQuestLevelWindow::_hero_quest->getPlayground()->nodeIsOnStairway(*hero_pos);
+}
+
+/*!
+ * Removes the current hero from the level (hero successfully exits the level),
+ * if remove_current_hero_from_level is true.
  * Switches _level_state._current_hero_idx to the next hero who still has a turn left.
  * If there is no hero having a turn left, set _level_state._current_hero_idx to
  * UINT_MAX (error).
  *
- * \return True, if there is a hero who still has a turn left; false otherwise.
+ * \param remove_current_hero_from_level
+ * \return SWICHTED_TO_HERO, if there is a hero who still has a turn left;
+ *         SWITCHED_TO_MONSTER, if the level has not yet ended, but no hero can act anymore in this round;
+ *         LEVEL_END, otherwise.
  */
-bool Level::switchToNextHero()
+Level::SwitchToNextCreatureResult Level::switchToNextCreature(bool remove_current_hero_from_level)
 {
     if (HeroQuestLevelWindow::_debug_create_attacks_creature_command_running)
         DVX(("BREAKPOINT"));
     DVX(("Level::switchToNextHero"));
+
+    if (remove_current_hero_from_level)
+    {
+        DVX(
+                ("remove_current_hero_from_level == true => removing %s from the level", qPrintable(getCurrentlyActingHero()->getName())));
+        uint previous_hero_index = _level_state._current_hero_idx;
+
+        removeHero(getCurrentlyActingHero(), true /*exit_successfully*/);
+
+        // check for level end
+        if (_level_state._heroes_may_exit_level_via_stairway && _acting_heroes.empty())
+            return LEVEL_END;
+
+        // set current_hero_idx to the hero who acted before the just deleted one,
+        // so that the potential index increase (see below) targets the correct
+        // hero in order
+        if (previous_hero_index == 0)
+            _level_state._current_hero_idx = _acting_heroes.size() - 1;
+        else
+            _level_state._current_hero_idx = previous_hero_index - 1;
+    }
+
     // check if there is a hero who still has a turn left
     bool hero_exists_who_has_turn_left = false;
     for (uint i = 0; i < _level_state._num_turns_left.size(); ++i)
@@ -1820,7 +1904,7 @@ bool Level::switchToNextHero()
     {
         _level_state._current_hero_idx = UINT_MAX;
         DVX(("switch to monsters"));
-        return false;
+        return SWITCHED_TO_MONSTER;
     }
 
     // hero with at least 1 turn left exists => set _current_hero_idx accordingly
@@ -1841,7 +1925,7 @@ bool Level::switchToNextHero()
         }
     }
 
-    return true;
+    return SWITCHED_TO_HERO;
 }
 
 void Level::handleTraps(
