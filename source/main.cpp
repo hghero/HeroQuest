@@ -16,19 +16,21 @@
 #include "HeroQuestLevelWindow.h"
 #include "Level01TheProbation.h"
 #include "GameState.h"
+#include "ParameterStorage.h"
 #include "SpellCardStorage.h"
+#include "TreasureCardStorage.h"
+#include "EquipmentCardStorage.h"
 #include "Debug.h"
 #include "DialogLevelBriefing.h"
+#include "DialogLevelFinished.h"
+#include "HeroCamp.h"
+#include "DialogBuyEquipment.h"
 
 using namespace std;
 
 /*
  * TODO:
- * - Spells implementieren, wo noch was fehlt
- * - wenn das Ziel der Mission erreicht ist, muss ein "geschafft"-Dialog kommen, und das nächste Level beginnt!
- *   => im Level muss irgendwie eine Success-Condition definiert werden!
  * - mit SonarGraph o.Ä. eine Grafik bauen, welche Klasse mit welcher anderen redet
- * - Dialog Buy Equipment
  */
 int main(int argc, char* argv[])
 {
@@ -44,9 +46,19 @@ int main(int argc, char* argv[])
 
     QResource::registerResource("resources/qrc_application.rcc");
 
+    ParameterStorage parameter_storage;
+
     SpellCardStorage spell_card_storage;
     if (!spell_card_storage.loadSpellCards())
         ProgError("Could not load spell cards");
+
+    TreasureCardStorage treasure_card_storage;
+    if (!treasure_card_storage.loadTreasureCards())
+        ProgError("Could not load treasure cards");
+
+    EquipmentCardStorage equipment_card_storage;
+    if (!equipment_card_storage.loadEquipmentCards())
+        ProgError("Could not load equipment cards");
 
     bool continue_playing = true;
     while (continue_playing)
@@ -135,6 +147,10 @@ int main(int argc, char* argv[])
             game_state._current_level = GameState::LEVEL_THE_PROBATION;
         }
 
+        // create heroes according to game state
+        HeroCamp hero_camp;
+        hero_camp.createHeroes(game_state._hero_names, game_state._alb_spell_family);
+
         // loop over the levels to play
         for (uint i_level = (uint) (game_state._current_level); i_level < game_state._level_names.size(); ++i_level)
         {
@@ -142,30 +158,35 @@ int main(int argc, char* argv[])
             DialogLevelBriefing dialog_level_briefing((GameState::LevelID) i_level);
             dialog_level_briefing.exec();
 
-            /*
-             TODO:
-             Buy Equipment Dialog shows up (if at least 1 hero has > 0 gold pieces)
-             - choose hero / show inventory (no "use" buttons)
-             - available equipment overview -> "buy" buttons
-             */
+            // buy equipment, if some hero has > 0 gold pieces
+            if (hero_camp.heroesCanByEquipment())
+            {
+                DialogBuyEquipment dialog_buy_equipment(hero_camp);
+                dialog_buy_equipment.exec();
+            }
 
             // for now: normal operation mode
             game_state._current_level_state = GameState::RUNNING;
 
-            HeroQuestLevelWindow hero_quest_level_window(HQ_VERSION, app, filename, &game_state, &spell_card_storage);
+            HeroQuestLevelWindow hero_quest_level_window(HQ_VERSION, app, filename, &game_state, &spell_card_storage,
+                    &treasure_card_storage, &equipment_card_storage, hero_camp);
             hero_quest_level_window.show();
 
             // start global event loop
             int exit_code = app.exec();
-            if (exit_code == HeroQuestLevelWindow::EXIT_CODE_LOST)
+            if (exit_code == HeroQuestLevelWindow::EXIT_CODE_LEVEL_FINISHED)
             {
-                // TODO: show "lost" dialog
+                DialogLevelFinished dialog_level_finished;
+                dialog_level_finished.exec();
+            }
+            else if (exit_code == HeroQuestLevelWindow::EXIT_CODE_LOST)
+            {
                 break;
             }
-            else
-            {
-                // TODO: show "success" dialog
-            }
+
+            // DEBUG:
+            DialogBuyEquipment dialog_buy_equipment_choose_hero(hero_camp);
+            dialog_buy_equipment_choose_hero.exec();
         }
     }
 

@@ -11,6 +11,7 @@
 #include <QtGui/QPainter>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QScreen>
+#include <QtGui/QCloseEvent>
 #include <QtWidgets/QScrollArea>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QMenuBar>
@@ -40,14 +41,21 @@
 #include "GameState.h"
 #include "Command.h"
 #include "Level01TheProbation.h"
+#include "HeroCamp.h"
+#include "SpellCardStorage.h"
+#include "TreasureCardStorage.h"
+#include "TreasureDataTypes.h"
+#include "ParameterStorage.h"
+#include "EquipmentCardStorage.h"
+#include "Trap.h"
 
 using namespace std;
 
 HeroQuestLevelWindow* HeroQuestLevelWindow::_hero_quest = 0; // static instance pointer
 
-int HeroQuestLevelWindow::FIELD_SIZE = 40; // field size in pixel; influences size of avatars and dice
-
-const QString HeroQuestLevelWindow::BUTTON_STYLE_ACTIVE   = "QPushButton {border-style: outset; min-width: 5em; border-width: 1px; border-radius: 5px; border-color: rgb(255,200,70);  padding: 4px; background-color: rgb(50,50,50); color: rgb(255,200,70); font: bold 14px;}"
+// TODO: move these constants to a more global class
+const QString HeroQuestLevelWindow::BUTTON_STYLE_ACTIVE =
+        "QPushButton {border-style: outset; min-width: 5em; border-width: 1px; border-radius: 5px; border-color: rgb(255,200,70);  padding: 4px; background-color: rgb(50,50,50); color: rgb(255,200,70); font: bold 14px;}"
                                          "QPushButton:pressed {border-style: inset;  min-width: 5em; border-width: 1px; border-radius: 5px; border-color: rgb(255,200,70);  padding: 4px; background-color: rgb(150,150,150); color: rgb(255,200,70); font: bold 14px;}";
 const QString HeroQuestLevelWindow::BUTTON_STYLE_INACTIVE = "QPushButton {border-style: outset; min-width: 5em; border-width: 1px; border-radius: 5px; border-color: rgb(150,150,150); padding: 4px; background-color: rgb(50,50,50); color: rgb(150,150,150); font: bold 14px;}";
 
@@ -78,14 +86,22 @@ HeroQuestLevelWindow::HeroQuestLevelWindow(
         QApplication& app,
         const QString& filename,
         GameState* game_state,
-        SpellCardStorage* spell_card_storage)
+        SpellCardStorage* spell_card_storage, //
+        TreasureCardStorage* treasure_card_storage, //
+        EquipmentCardStorage* equipment_card_storage, //
+        HeroCamp& hero_camp)
 :
     QMainWindow((QMainWindow*)0),
     _version(version),
     _app(app),
     _save_action(0),
     _game_state(game_state),
+    _hero_camp(
+                hero_camp),
     _spell_card_storage(spell_card_storage),
+    _treasure_card_storage(treasure_card_storage),
+    _equipment_card_storage(
+                equipment_card_storage),
     _level(0),
     _heroes(),
     _action_pane(0),
@@ -98,7 +114,9 @@ HeroQuestLevelWindow::HeroQuestLevelWindow(
         _event_blocking_bitmask(EventBlockingContext::EVENT_BLOCKING_NONE), //
         _is_painting(false), //
         _user_interaction_mode(USER_INTERACTION_NORMAL), //
-        _user_selected_node_id(-1, -1), _user_selected_two_node_ids(make_pair(NodeID(-1, -1), NodeID(-1, -1))), _user_abort(
+        _user_selected_node_id(-1, -1), //
+        _user_selected_two_node_ids(make_pair(NodeID(-1, -1), NodeID(-1, -1))), //
+        _user_abort(
                 false)
 {
     _hero_quest = this; // set static instance pointer
@@ -125,6 +143,8 @@ HeroQuestLevelWindow::HeroQuestLevelWindow(
     // Exit on escape; block paintEvents during load; ...
     // Note that it is crucial to call installEventFilter() on the _app! It does NOT suffice to install it on this HeroQuestLeveWindow!
     _app.installEventFilter(this);
+
+    hero_camp.getHeroes(&_heroes);
 
     createGUIElements();
 
@@ -167,16 +187,6 @@ void HeroQuestLevelWindow::createGUIElements()
      *  -------------------------------------------------
      */
 
-    // The screen size determines the size of the widgets.
-    int screen_width = 1920;
-    int screen_height = 1080;
-    if (!QGuiApplication::screens().empty())
-    {
-        QScreen* first_screen = *(QGuiApplication::screens().begin());
-        screen_width = first_screen->availableGeometry().width();
-        screen_height = first_screen->availableGeometry().height();
-        DVX(("screen width: %d, screen height: %d", screen_width, screen_height));
-    }
     const int margin = 5;
 
     // central widget
@@ -192,24 +202,17 @@ void HeroQuestLevelWindow::createGUIElements()
     setStyleSheet("color: rgb(255,0,0) ; border: 1px solid #00ff00 ;");
 #endif
 
-
-    // For 1920 x 1080, the optimal playground size is 1193 x 950, with field size 40 pixels.
-    int playground_width = int(float(screen_width) / 1920 * 1193 + 0.5);
-    int playground_height = int(float(playground_width) * 950 / 1193 + 0.5);
-    int field_size = int(float(playground_width) / 1193 * 40 + 0.5);
-    DV(("field_size should be %d", field_size));
-    HeroQuestLevelWindow::FIELD_SIZE = field_size;
-
-
     // the playground size determines the sizes of the surrounding dialog elements
     _playground = new Playground(central_widget);
-    _playground->setFixedSize(QSize(playground_width, playground_height));
+    _playground->setFixedSize(
+            QSize(ParameterStorage::instance->getPlaygroundWidth(), ParameterStorage::instance->getPlaygroundHeight()));
     _playground->create();
 #if 0
     _playground_pane->setFrameStyle(QFrame::Panel | QFrame::Sunken);
     _playground_pane->setStyleSheet("color: rgb(255,0,0) ; border: 1px solid #00ff00 ;");
 #endif
-    int action_pane_width = (screen_width - 6 * margin - playground_width) / 2;
+    int action_pane_width = (ParameterStorage::instance->getScreenWidth() - 6 * margin
+            - ParameterStorage::instance->getPlaygroundWidth()) / 2;
     int info_pane_width = action_pane_width;
 
     // stretch
@@ -226,7 +229,7 @@ void HeroQuestLevelWindow::createGUIElements()
     QVBoxLayout* action_pane_layout = new QVBoxLayout;
     _action_pane->setLayout(action_pane_layout);
     action_pane_layout->setMargin(0);
-    _dice_roll_pane = new DiceRollPane(action_pane_width, FIELD_SIZE);
+    _dice_roll_pane = new DiceRollPane(action_pane_width, ParameterStorage::instance->getFieldSize());
     action_pane_layout->addStretch(); // test
     action_pane_layout->addWidget(_dice_roll_pane);
     _button_pane = new ButtonPane();
@@ -267,7 +270,7 @@ void HeroQuestLevelWindow::createGUIElements()
     // info pane: info_pane_wrapper => scroll_area => _info_pane
     QLabel* info_pane_wrapper = new QLabel(central_widget);
     _info_pane = new QLabel(info_pane_wrapper);
-    _info_pane->setFixedSize(info_pane_width, screen_height);
+    _info_pane->setFixedSize(info_pane_width, ParameterStorage::instance->getScreenHeight());
     QVBoxLayout* info_pane_layout = new QVBoxLayout;
     _info_pane->setLayout(info_pane_layout);
     info_pane_layout->setMargin(0);
@@ -275,10 +278,10 @@ void HeroQuestLevelWindow::createGUIElements()
     _info_pane->setFrameStyle(QFrame::Panel | QFrame::Sunken);
     _info_pane->setStyleSheet("color: rgb(255,0,0) ; border: 1px solid #ff0000 ;");
 #endif
-    info_pane_wrapper->setFixedSize(info_pane_width, playground_height);
+    info_pane_wrapper->setFixedSize(info_pane_width, ParameterStorage::instance->getPlaygroundHeight());
     QScrollArea* scroll_area = new QScrollArea(info_pane_wrapper);
     {
-        scroll_area->setFixedSize(info_pane_width, playground_height);
+        scroll_area->setFixedSize(info_pane_width, ParameterStorage::instance->getPlaygroundHeight());
         scroll_area->setWidget(_info_pane);
     }
     central_widget_layout->addWidget(info_pane_wrapper);
@@ -574,7 +577,8 @@ bool HeroQuestLevelWindow::checkApplySpell(QVariant hero)
 
     if (use_resistance_potion)
     {
-        const TreasureCard* resistance_potion_p = actual_hero->getInventory().getTreasureCard(Playground::TREASURE_CARD_RESISTANCE_POTION);
+        const TreasureCard* resistance_potion_p = actual_hero->getInventory().getTreasureCard(
+                TreasureDataTypes::TREASURE_CARD_RESISTANCE_POTION);
         TreasureCard resistance_potion = *resistance_potion_p;
 
         // hero uses the resistance potion => remove it from his inventory
@@ -606,13 +610,10 @@ bool HeroQuestLevelWindow::checkDeath(Hero* hero)
 bool HeroQuestLevelWindow::save(std::ostream& stream) const
 {
     _game_state->save(stream);
-
-    for (uint i = 0; i < _heroes.size(); ++i)
-    {
-        StreamUtils::write(stream, _heroes[i]->getName());
-
-        _heroes[i]->save(stream);
-    }
+    _spell_card_storage->save(stream);
+    _treasure_card_storage->save(stream);
+    _equipment_card_storage->save(stream);
+    _hero_camp.save(stream);
 
     _level->save(stream);
     _playground->save(stream);
@@ -622,18 +623,6 @@ bool HeroQuestLevelWindow::save(std::ostream& stream) const
 
 bool HeroQuestLevelWindow::load(std::istream& stream)
 {
-    {
-        uint num_heroes = _game_state->_hero_names.size();
-        DV(("num_heroes: %d", num_heroes));
-        for (uint i = 0; i < num_heroes; ++i)
-        {
-            QString hero_name;
-            StreamUtils::read(stream, &hero_name);
-
-            _heroes[i]->load(stream);
-        }
-    }
-
     DV(("loading level..."));
     _level->load(stream);
 
@@ -700,7 +689,8 @@ bool HeroQuestLevelWindow::checkDefend(QVariant hero)
 
     if (use_immunization_potion)
     {
-        const TreasureCard* immunization_potion_p = actual_hero->getInventory().getTreasureCard(Playground::TREASURE_CARD_IMMUNIZATION_POTION);
+        const TreasureCard* immunization_potion_p = actual_hero->getInventory().getTreasureCard(
+                TreasureDataTypes::TREASURE_CARD_IMMUNIZATION_POTION);
         TreasureCard immunization_potion = *immunization_potion_p;
         immunization_potion.executeInventoryActions(actual_hero);
 
@@ -746,7 +736,8 @@ bool HeroQuestLevelWindow::checkDeath(QVariant hero)
 
     if (use_healing_potion)
     {
-        const TreasureCard* healing_potion_p = actual_hero->getInventory().getTreasureCard(Playground::TREASURE_CARD_HEALING_POTION);
+        const TreasureCard* healing_potion_p = actual_hero->getInventory().getTreasureCard(
+                TreasureDataTypes::TREASURE_CARD_HEALING_POTION);
         TreasureCard healing_potion = *healing_potion_p;
         healing_potion.executeInventoryActions(actual_hero);
 
@@ -848,8 +839,19 @@ bool HeroQuestLevelWindow::loadGame(const QString& filename)
                 ("HeroQuestLevelWindow::loadGame: suppress paint events while load game"));
         EventBlockingContext load_game_context(this); // makes sure that no paint event is running now
 
-        // game state
         if (!_game_state->load(infile))
+        {
+            return false;
+        }
+        if (!_spell_card_storage->load(infile))
+        {
+            return false;
+        }
+        if (!_treasure_card_storage->load(infile))
+        {
+            return false;
+        }
+        if (!_equipment_card_storage->load(infile))
         {
             return false;
         }
@@ -857,8 +859,17 @@ bool HeroQuestLevelWindow::loadGame(const QString& filename)
         // level
         createLevel();
 
-        // heroes
-        addHeroesAccordingToGameState();
+        DV(("loading hero_camp..."));
+        if (!_hero_camp.load(infile, *_game_state))
+        {
+            return false;
+        }
+
+        // update heroes from camp
+        _hero_camp.getHeroes(&_heroes);
+
+        // hero static panes
+        addHeroStatisticPanes();
 
         if (!load(infile))
         {
@@ -967,6 +978,22 @@ bool HeroQuestLevelWindow::useInventoryItem(const InventoryItem& inventory_item)
         return spell_card_used;
     }
 
+    if (inventory_item.isEquipmentCard())
+    {
+        const EquipmentCard& equipment_card = dynamic_cast<const EquipmentCard&>(inventory_item);
+        bool equipment_card_used = useEquipmentCard(equipment_card);
+        if (equipment_card_used)
+        {
+            EquipmentCard equipment_card_copy(equipment_card);
+
+            // remove from hero's inventory
+            currentlyActingHero->getInventory().removeEquipmentCard(equipment_card);
+            // add back to equipment card stock
+            EquipmentCardStorage::instance->addEquipmentCardToStock(equipment_card_copy);
+        }
+        return equipment_card_used;
+    }
+
     DVX(("HeroQuest::useInventoryItem: Case not yet implemented"));
     return false;
 }
@@ -989,6 +1016,21 @@ bool HeroQuestLevelWindow::useSpellCard(const SpellCard& spell_card)
     }
 
     return spell_card_used;
+}
+
+bool HeroQuestLevelWindow::useEquipmentCard(const EquipmentCard& equipment_card)
+{
+    bool equipment_card_used = equipment_card.execute();
+
+    if (equipment_card_used)
+    {
+        // action states: hero has attacked or done sth. equivalent
+        --(_level->getCurrentHeroActionStates()._num_attacks_left);
+
+        updateButtons();
+    }
+
+    return equipment_card_used;
 }
 
 /*!
@@ -1014,7 +1056,11 @@ HeroQuestLevelWindow::UserInteractionMode HeroQuestLevelWindow::getUserInteracti
     return _user_interaction_mode;
 }
 
-void HeroQuestLevelWindow::setUserInteractionMode(UserInteractionMode user_interaction_mode)
+/*!
+ * @param related_hero is used for USER_INTERACTION_SELECT_CREATURE_IN_HORIZONTAL_OR_VERTICAL_LINE_OF_SIGHT
+ * or for USER_INTERACTION_SELECT_ADJACENT_PIT_TRAP
+ */
+void HeroQuestLevelWindow::setUserInteractionMode(UserInteractionMode user_interaction_mode, const Hero* related_hero)
 {
     _user_interaction_mode = user_interaction_mode;
 
@@ -1086,6 +1132,40 @@ void HeroQuestLevelWindow::setUserInteractionMode(UserInteractionMode user_inter
         }
             break;
 
+        case USER_INTERACTION_SELECT_CREATURE_IN_HORIZONTAL_OR_VERTICAL_LINE_OF_SIGHT:
+        {
+            // make buttons inactive
+            updateButtons();
+            updateHeroStatisticPanes();
+            // forbid save
+            _save_action->setEnabled(false);
+            // playground
+            _playground->setActionMode(Playground::ACTION_MODE_SELECT_FIELD_IN_VISUAL_LINE_OF_SIGHT, related_hero);
+            // hint
+            _hint_pane->setHint("Select a creature (RMB)!", HintPane::ALLOW_ABORT);
+
+            // init result
+            _user_selected_node_id = NodeID(-1, -1);
+        }
+            break;
+
+        case USER_INTERACTION_SELECT_ADJACENT_PIT_TRAP:
+        {
+            // make buttons inactive
+            updateButtons();
+            updateHeroStatisticPanes();
+            // forbid save
+            _save_action->setEnabled(false);
+            // playground
+            _playground->setActionMode(Playground::ACTION_MODE_SELECT_ADJACENT_FIELD, related_hero);
+            // hint
+            _hint_pane->setHint("Select a pit trap (LMB)!", HintPane::ALLOW_ABORT);
+
+            // init result
+            _user_selected_node_id = NodeID(-1, -1);
+        }
+            break;
+
         default:
             DVX(("HeroQuestLevelWindow::setUserInteractionMode: user_interaction_mode NYI!"))
             ;
@@ -1148,7 +1228,7 @@ Creature* HeroQuestLevelWindow::userSelectsCreature()
     {
         loop.processEvents();
 
-        // node_id chosen which holds a hero?
+        // node_id chosen which holds a creature?
         creature = _playground->getCreature(_user_selected_node_id);
         if (creature != 0)
         {
@@ -1160,6 +1240,66 @@ Creature* HeroQuestLevelWindow::userSelectsCreature()
     HeroQuestLevelWindow::_hero_quest->setUserInteractionMode(HeroQuestLevelWindow::USER_INTERACTION_NORMAL);
 
     return creature;
+}
+
+Creature* HeroQuestLevelWindow::userSelectsCreatureInHorizontalOrVerticalLineOfSightOf(const Hero& attacker)
+{
+    // switch to creature selection mode in horizontal or vertical line of sight
+    HeroQuestLevelWindow::_hero_quest->setUserInteractionMode(
+            HeroQuestLevelWindow::USER_INTERACTION_SELECT_CREATURE_IN_HORIZONTAL_OR_VERTICAL_LINE_OF_SIGHT, &attacker);
+
+    // setup internal event loop to let the user select a creature on the board
+    Creature* creature = 0;
+    QEventLoop loop;
+    bool creature_chosen = false;
+    _user_abort = false;
+    while (!(creature_chosen || _user_abort))
+    {
+        loop.processEvents();
+
+        // node_id chosen which holds a creature in horizontal or vertical line of sight of attacker
+        // (otherwise the creature returned by "getCreature" would be 0 in this mode)?
+        creature = _playground->getCreature(_user_selected_node_id);
+        if (creature != 0)
+        {
+            creature_chosen = true;
+        }
+    }
+
+    // switch back to normal mode
+    HeroQuestLevelWindow::_hero_quest->setUserInteractionMode(HeroQuestLevelWindow::USER_INTERACTION_NORMAL);
+
+    return creature;
+}
+
+PitTrap* HeroQuestLevelWindow::userSelectsAdjacentPitTrap(const Hero& hero)
+{
+    // switch to adjacent pit trap selection mode
+    HeroQuestLevelWindow::_hero_quest->setUserInteractionMode(
+            HeroQuestLevelWindow::USER_INTERACTION_SELECT_ADJACENT_PIT_TRAP, &hero);
+
+    // setup internal event loop to let the user select a pit trap on the board
+    PitTrap* pit_trap = 0;
+    QEventLoop loop;
+    bool pit_trap_chosen = false;
+    _user_abort = false;
+    while (!(pit_trap_chosen || _user_abort))
+    {
+        loop.processEvents();
+
+        // node_id chosen which holds a pit trap adjacent to hero
+        // (otherwise the pit trap returned by "getPitTrap" would be 0 in this mode)?
+        pit_trap = dynamic_cast<PitTrap*>(_playground->getTrap(_user_selected_node_id));
+        if (pit_trap != 0)
+        {
+            pit_trap_chosen = true;
+        }
+    }
+
+    // switch back to normal mode
+    HeroQuestLevelWindow::_hero_quest->setUserInteractionMode(HeroQuestLevelWindow::USER_INTERACTION_NORMAL);
+
+    return pit_trap;
 }
 
 void HeroQuestLevelWindow::userSelectsCreatureOrDoor(Creature** creature, Door** door)
@@ -1464,6 +1604,12 @@ Creature* HeroQuestLevelWindow::getCreature(uint referencing_id)
     return 0;
 }
 
+Hero* HeroQuestLevelWindow::getHero(uint referencing_id)
+{
+    Creature* creature = getCreature(referencing_id);
+    return dynamic_cast<Hero*>(creature);
+}
+
 bool HeroQuestLevelWindow::eventFilter(QObject* /*object*/, QEvent* event)
 {
     // ============= event blocking =============
@@ -1491,14 +1637,18 @@ bool HeroQuestLevelWindow::eventFilter(QObject* /*object*/, QEvent* event)
         QKeyEvent* ke = static_cast<QKeyEvent*>(event);
         if (ke->key() == Qt::Key_Escape)
         {
-            if (_playground != 0 && _playground->getActionMode() == Playground::ACTION_MODE_SELECT_FIELD_OR_DOOR)
+            if (_playground != 0
+                    && (_playground->getActionMode() == Playground::ACTION_MODE_SELECT_FIELD_OR_DOOR
+                            || _playground->getActionMode()
+                                    == Playground::ACTION_MODE_SELECT_FIELD_IN_VISUAL_LINE_OF_SIGHT
+                            || _playground->getActionMode() == Playground::ACTION_MODE_SELECT_ADJACENT_FIELD))
             {
-                // cancel selecting a hero
+                // cancel selecting a field or door
                 _user_abort = true;
             }
             else
             {
-                // quit this level
+                // quit this level as failed
                 close();
             }
             return true;
@@ -1507,6 +1657,21 @@ bool HeroQuestLevelWindow::eventFilter(QObject* /*object*/, QEvent* event)
 
     // event is not handled here => forward the event to follow-up handlers
     return false;
+}
+
+void HeroQuestLevelWindow::closeEvent(QCloseEvent* event)
+{
+    // exit level as failed when window is simply closed
+    bool really_exit_as_failed = (execDialogOkCancel("Really exit level as failed?",
+            "Press Ok to exit this level and lose the game.") == QDialog::Accepted);
+    if (really_exit_as_failed)
+    {
+        exitLost();
+    }
+
+    // note that we never call QMainWindow::closeEvent();
+    // we use app.exit() instead
+    event->ignore();
 }
 
 /*!
@@ -1528,7 +1693,7 @@ void HeroQuestLevelWindow::startGame(const QString& filename)
     else
     {
         createLevel();
-        addHeroesAccordingToGameState();
+        addHeroStatisticPanes();
         _level->setActingHeroes(getHeroes());
         _level->create();
         _level->startRound();
@@ -1536,9 +1701,9 @@ void HeroQuestLevelWindow::startGame(const QString& filename)
 }
 
 /*!
- * Adds heores according to game state hero names.
+ * Adds hero statistic panes to the info area.
  */
-void HeroQuestLevelWindow::addHeroesAccordingToGameState()
+void HeroQuestLevelWindow::addHeroStatisticPanes()
 {
     // clean internal data structures and GUI
     QVBoxLayout* info_pane_layout = dynamic_cast<QVBoxLayout*>(_info_pane->layout());
@@ -1553,42 +1718,19 @@ void HeroQuestLevelWindow::addHeroesAccordingToGameState()
     }
     _hero_statistic_panes.clear();
 
-    for (vector<Hero*>::iterator it = _heroes.begin(); it != _heroes.end(); ++it)
-    {
-        delete *it;
-    }
-    _heroes.clear();
-
-    // generate heroes, adds statistic panes to the info area
-    if (_game_state->_hero_names.size() > 4)
-    {
-        DVX(("more than 4 heroes not supported"));
-        return;
-    }
+    // --- add statistic panes to the info area ---
 
     // top stretch
     if (info_pane_layout != 0)
         info_pane_layout->addStretch();
-    for (uint i = 0; i < _game_state->_hero_names.size(); ++i)
+    for (size_t i = 0; i < _heroes.size(); ++i)
     {
-        const QString& hero_name = _game_state->_hero_names[i];
+        Hero* hero = _heroes[i];
 
-        if (hero_name == "Barbarian")
-            addHero<Barbarian>();
-        else if (hero_name == "Dwarf")
-            addHero<Dwarf>();
-        else if (hero_name == "Alb")
-            addHero<Alb>();
-        else if (hero_name == "Magician")
-            addHero<Magician>();
-        else
-        {
-            DVX(("unknown hero name \"%s\"", qPrintable(hero_name)));
-            continue;
-        }
+        addHeroStatisticPane(hero);
 
         // spacing
-        if (info_pane_layout != 0 && i < _game_state->_hero_names.size() - 1)
+        if (info_pane_layout != 0 && i < _heroes.size() - 1)
         {
             info_pane_layout->addSpacing(10);
         }
@@ -1601,14 +1743,6 @@ void HeroQuestLevelWindow::addHeroesAccordingToGameState()
     string test;
     cin >> test;
 #endif
-
-    // if Alb exists, its spell pile must be set
-    for (vector<Hero*>::iterator it = HeroQuestLevelWindow::_hero_quest->getHeroes().begin(); it != HeroQuestLevelWindow::_hero_quest->getHeroes().end(); ++it)
-    {
-        Alb* alb = dynamic_cast<Alb*>(*it);
-        if (alb != 0)
-            alb->setSpellFamily(_game_state->_alb_spell_family);
-    }
 }
 
 void HeroQuestLevelWindow::connectActionButtons()
@@ -1622,12 +1756,14 @@ void HeroQuestLevelWindow::connectActionButtons()
 void HeroQuestLevelWindow::exitLevelFinished()
 {
     DVX(("Level finished successfully!"));
+    _level->cleanupGameMaterialOnLevelFinish();
     _app.exit(EXIT_CODE_LEVEL_FINISHED);
 }
 
 void HeroQuestLevelWindow::exitLost()
 {
     DVX(("Level lost :-("));
+    _level->cleanupGameMaterialOnLevelFinish();
     _app.exit(EXIT_CODE_LOST);
 }
 

@@ -29,7 +29,8 @@ public:
 		SOUND_THROW_DICE,
 		DRAW_TREASURE_CARD_GOOD,
         DRAW_TREASURE_CARD_BAD,
-        CAST_SPELL
+        CAST_SPELL,
+        SOUND_DISARM_PIT_TRAP
 	};
 
 	SoundManager();

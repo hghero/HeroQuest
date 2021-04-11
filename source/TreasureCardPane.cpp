@@ -6,8 +6,9 @@
 #include <QtWidgets/QLayout>
 
 #include "HeroQuestLevelWindow.h"
-#include "QuestBoard.h"
 #include "TreasureDescription.h"
+#include "TreasureCardStorage.h"
+#include "ParameterStorage.h"
 
 
 using namespace std;
@@ -39,10 +40,11 @@ TreasureCardPane::TreasureCardPane(QWidget* parent, const TreasureCard& treasure
     const TreasureDescription& treasure_card_description = treasure_card.getTreasureDescription();
 
     // _treasure_card_back_image
-    QPixmap* treasure_card_back_image = HeroQuestLevelWindow::_hero_quest->getPlayground()->getTreasureCardBackImage();
+    QPixmap* treasure_card_back_image = TreasureCardStorage::instance->getTreasureCardBackImage();
     if (treasure_card_back_image == 0)
         return;
-    int treasure_card_back_image_scaled_width = HeroQuestLevelWindow::_hero_quest->getPlayground()->getQuestBoard()->getFieldWidth() * TREASURE_CARD_BACK_WIDTH_FIELD_SIZE_FACTOR;
+    int treasure_card_back_image_scaled_width = ParameterStorage::instance->getFieldSize()
+            * TREASURE_CARD_BACK_WIDTH_FIELD_SIZE_FACTOR;
     QLabel* back_image_label = new QLabel();
     back_image_label->setPixmap(treasure_card_back_image->scaledToWidth(treasure_card_back_image_scaled_width));
     back_image_label->setAlignment(Qt::AlignTop);
@@ -54,11 +56,13 @@ TreasureCardPane::TreasureCardPane(QWidget* parent, const TreasureCard& treasure
     _outer_layout->addWidget(space1_label);
 
     // _treasure_image
-    QPixmap* treasure_image = HeroQuestLevelWindow::_hero_quest->getPlayground()->getTreasureCardImage(treasure_card_description.getTreasureImageID());
+    QPixmap* treasure_image = TreasureCardStorage::instance->getTreasureCardImage(
+            treasure_card_description.getTreasureImageID());
     if (treasure_image == 0)
         return;
     QLabel* image_label = new QLabel();
-    image_label->setPixmap(treasure_image->scaledToWidth(HeroQuestLevelWindow::_hero_quest->getPlayground()->getQuestBoard()->getFieldWidth() * TREASURE_IMAGE_WIDTH_FACTOR));
+    image_label->setPixmap(
+            treasure_image->scaledToWidth(ParameterStorage::instance->getFieldSize() * TREASURE_IMAGE_WIDTH_FACTOR));
     image_label->setAlignment(Qt::AlignTop);
     _outer_layout->addWidget(image_label);
 

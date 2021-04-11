@@ -275,18 +275,13 @@ void DiceRollPane::updateMovementDice(Hero& hero, const std::vector<unsigned int
 
 void DiceRollPane::throwAttackDice(Creature& creature, vector<DiceRollPane::AttackDiceResult>* dice_results)
 {
-	unsigned int num_dice_attack = creature.getNumDiceAttack();
+    unsigned int num_dice_attack = creature.getNumDiceAttack();
 
 	// if a hero attacker sits in a pit trap, he attacks with 1 dice less
 	if (creature.isHero() && HeroQuestLevelWindow::_hero_quest->getLevel()->creatureIsCaughtInPitTrap(creature) && num_dice_attack > 0)
 		num_dice_attack -= 1;
 
 	throwAttackDice(creature, num_dice_attack, dice_results);
-
-    // Hero: reset extra attack dice
-	Hero* hero = dynamic_cast<Hero*>(&creature);
-	if (hero != 0)
-	    hero->setNumDiceAttackExtra(0);
 }
 
 void DiceRollPane::throwAttackDice(Creature& creature, unsigned int num_dice, vector<DiceRollPane::AttackDiceResult>* dice_results)
@@ -340,7 +335,7 @@ void DiceRollPane::setAttackSkulls(Creature* creature, unsigned int num_skulls)
 
 void DiceRollPane::throwDefendDice(Creature& creature, vector<DiceRollPane::AttackDiceResult>* dice_results)
 {
-	uint num_dice_defend = creature.getNumDiceDefend();
+    uint num_dice_defend = creature.getHighestNumDiceDefend();
 
 	// if a hero defender sits in a pit trap, he defends with 1 dice less
 	if (creature.isHero() && HeroQuestLevelWindow::_hero_quest->getLevel()->creatureIsCaughtInPitTrap(creature) && num_dice_defend > 0)

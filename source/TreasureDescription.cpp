@@ -10,6 +10,7 @@
 #include "StreamUtils.h"
 #include "HeroQuestLevelWindow.h"
 #include "Debug.h"
+#include "TreasureCardStorage.h"
 
 using namespace std;
 
@@ -20,7 +21,7 @@ TreasureDescription::TreasureDescription()
 _id("unknown"),
 _treasure_image(0),
 _amount(0),
-_image_id(Playground::TREASURE_CARD_UNKNOWN),
+ _image_id(TreasureDataTypes::TREASURE_CARD_UNKNOWN),
 _text(),
 _actions()
 {
@@ -32,7 +33,7 @@ TreasureDescription::TreasureDescription(const QString& filename)
 _id("unknown"),
 _treasure_image(0),
 _amount(0),
-_image_id(Playground::TREASURE_CARD_UNKNOWN),
+ _image_id(TreasureDataTypes::TREASURE_CARD_UNKNOWN),
 _text(),
 _actions()
 {
@@ -64,12 +65,12 @@ unsigned int TreasureDescription::getAmount() const
 	return _amount;
 }
 
-void TreasureDescription::setTreasureImageID(const Playground::TreasureImageID& treasure_image_id)
+void TreasureDescription::setTreasureImageID(const TreasureDataTypes::TreasureImageID& treasure_image_id)
 {
 	_image_id = treasure_image_id;
 }
 
-const Playground::TreasureImageID& TreasureDescription::getTreasureImageID() const
+const TreasureDataTypes::TreasureImageID& TreasureDescription::getTreasureImageID() const
 {
 	return _image_id;
 }
@@ -170,7 +171,7 @@ bool TreasureDescription::load(std::istream& stream)
 
     uint tmp_id;
     StreamUtils::readUInt(stream, &tmp_id);
-    _image_id = (Playground::TreasureImageID)(tmp_id);
+    _image_id = (TreasureDataTypes::TreasureImageID) (tmp_id);
 
     StreamUtils::read(stream, &_text);
     StreamUtils::read(stream, &_actions);
@@ -179,8 +180,8 @@ bool TreasureDescription::load(std::istream& stream)
 
 void TreasureDescription::updateTreasureImage()
 {
-    if (_image_id != Playground::TREASURE_CARD_UNKNOWN)
-        _treasure_image = HeroQuestLevelWindow::_hero_quest->getPlayground()->getTreasureCardImage(_image_id);
+    if (_image_id != TreasureDataTypes::TREASURE_CARD_UNKNOWN)
+        _treasure_image = TreasureCardStorage::instance->getTreasureCardImage(_image_id);
 }
 
 /*!
@@ -277,7 +278,7 @@ bool TreasureDescription::readFromFile(const QString& filename)
 
 		case IMAGE_ID:
 			_image_id = getTreasureImageID(*it);
-			if (_image_id == Playground::TREASURE_CARD_UNKNOWN)
+                if (_image_id == TreasureDataTypes::TREASURE_CARD_UNKNOWN)
 			{
                     cout << "Error interpreting treasure image id \"" << it->toUtf8().constData()
                             << "\" from TreasureDescription file \"" << qPrintable(filename) << "\"(line no. "
@@ -301,7 +302,7 @@ bool TreasureDescription::readFromFile(const QString& filename)
 		++line_no;
 	}
 
-	_treasure_image = HeroQuestLevelWindow::_hero_quest->getPlayground()->getTreasureCardImage(_image_id);
+    _treasure_image = TreasureCardStorage::instance->getTreasureCardImage(_image_id);
 
 	return true;
 }
@@ -325,63 +326,63 @@ bool TreasureDescription::buildDescriptions(set<TreasureDescription>* treasure_c
 	return result;
 }
 
-Playground::TreasureImageID TreasureDescription::getTreasureImageID(const QString& str)
+TreasureDataTypes::TreasureImageID TreasureDescription::getTreasureImageID(const QString& str)
 {
 	if (str.compare("TREASURE_CARD_NOTHING") == 0)
-		return Playground::TREASURE_CARD_NOTHING;
+        return TreasureDataTypes::TREASURE_CARD_NOTHING;
 
 	if (str.compare("TREASURE_CARD_POISON") == 0)
-		return Playground::TREASURE_CARD_POISON;
+        return TreasureDataTypes::TREASURE_CARD_POISON;
 
 	if (str.compare("TREASURE_CARD_TRAP_WALL") == 0)
-		return Playground::TREASURE_CARD_TRAP_WALL;
+        return TreasureDataTypes::TREASURE_CARD_TRAP_WALL;
 
 	if (str.compare("TREASURE_CARD_TRAP_PIT") == 0)
-		return Playground::TREASURE_CARD_TRAP_PIT;
+        return TreasureDataTypes::TREASURE_CARD_TRAP_PIT;
 
 	if (str.compare("TREASURE_CARD_ROAMING_MONSTER") == 0)
-		return Playground::TREASURE_CARD_ROAMING_MONSTER;
+        return TreasureDataTypes::TREASURE_CARD_ROAMING_MONSTER;
 
 	if (str.compare("TREASURE_CARD_GOLD") == 0)
-		return Playground::TREASURE_CARD_GOLD;
+        return TreasureDataTypes::TREASURE_CARD_GOLD;
 
 	if (str.compare("TREASURE_CARD_JEWELS") == 0)
-		return Playground::TREASURE_CARD_JEWELS;
+        return TreasureDataTypes::TREASURE_CARD_JEWELS;
 
 	if (str.compare("TREASURE_CARD_GEMSTONE") == 0)
-		return Playground::TREASURE_CARD_GEMSTONE;
+        return TreasureDataTypes::TREASURE_CARD_GEMSTONE;
 
 	if (str.compare("TREASURE_CARD_GOLD_TREASURE") == 0)
-		return Playground::TREASURE_CARD_GOLD_TREASURE;
+        return TreasureDataTypes::TREASURE_CARD_GOLD_TREASURE;
 
 	if (str.compare("TREASURE_CARD_BRAVENESS_POTION") == 0)
-		return Playground::TREASURE_CARD_BRAVENESS_POTION;
+        return TreasureDataTypes::TREASURE_CARD_BRAVENESS_POTION;
 
 	if (str.compare("TREASURE_CARD_HEALING_POTION") == 0)
-		return Playground::TREASURE_CARD_HEALING_POTION;
+        return TreasureDataTypes::TREASURE_CARD_HEALING_POTION;
 
 	if (str.compare("TREASURE_CARD_HOLY_WATER") == 0)
-		return Playground::TREASURE_CARD_HOLY_WATER;
+        return TreasureDataTypes::TREASURE_CARD_HOLY_WATER;
 
 	if (str.compare("TREASURE_CARD_IMMUNIZATION_POTION") == 0)
-		return Playground::TREASURE_CARD_IMMUNIZATION_POTION;
+        return TreasureDataTypes::TREASURE_CARD_IMMUNIZATION_POTION;
 
 	if (str.compare("TREASURE_CARD_MAGIC_POTION") == 0)
-		return Playground::TREASURE_CARD_MAGIC_POTION;
+        return TreasureDataTypes::TREASURE_CARD_MAGIC_POTION;
 
 	if (str.compare("TREASURE_CARD_PHILOSOPHERS_STONE") == 0)
-		return Playground::TREASURE_CARD_PHILOSOPHERS_STONE;
+        return TreasureDataTypes::TREASURE_CARD_PHILOSOPHERS_STONE;
 
 	if (str.compare("TREASURE_CARD_POWER_POTION") == 0)
-		return Playground::TREASURE_CARD_POWER_POTION;
+        return TreasureDataTypes::TREASURE_CARD_POWER_POTION;
 
 	if (str.compare("TREASURE_CARD_RESISTANCE_POTION") == 0)
-		return Playground::TREASURE_CARD_RESISTANCE_POTION;
+        return TreasureDataTypes::TREASURE_CARD_RESISTANCE_POTION;
 
 	if (str.compare("TREASURE_CARD_SPRINT_POTION") == 0)
-		return Playground::TREASURE_CARD_SPRINT_POTION;
+        return TreasureDataTypes::TREASURE_CARD_SPRINT_POTION;
 
-	return Playground::TREASURE_CARD_UNKNOWN;
+    return TreasureDataTypes::TREASURE_CARD_UNKNOWN;
 }
 
 bool TreasureDescription::operator<(const TreasureDescription& other) const

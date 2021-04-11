@@ -21,6 +21,8 @@
 #include "Debug.h"
 #include "Level.h"
 #include "PainterContext.h"
+#include "ParameterStorage.h"
+#include "GraphBase.h"
 
 
 using namespace std;
@@ -48,48 +50,6 @@ const QString Playground::TORTURE_RACK_FILENAME = ":/graphics/torture_rack.tga";
 const QString Playground::WARLOCK_TABLE_FILENAME = ":/graphics/warlock_table.jpg";
 
 // treasure image filenames
-const QString Playground::TREASURE_CARD_BACK_FILENAME = ":/graphics/treasure_card_back.jpg";
-const QString Playground::TREASURE_CHEST_3D_FILENAME = ":/graphics/chest_3d.tga";
-
-const QString Playground::TREASURE_CARD_BRAVENESS_POTION_FILENAME = ":/graphics/treasure_card_braveness_potion.jpg";
-const QString Playground::TREASURE_CARD_GEMSTONE_FILENAME = ":/graphics/treasure_card_gemstone.jpg";
-const QString Playground::TREASURE_CARD_GOLD_FILENAME = ":/graphics/treasure_card_gold.jpg";
-const QString Playground::TREASURE_CARD_GOLD_TREASURE_FILENAME = ":/graphics/treasure_card_gold_treasure.jpg";
-const QString Playground::TREASURE_CARD_HEALING_POTION_FILENAME = ":/graphics/treasure_card_healing_potion.jpg";
-const QString Playground::TREASURE_CARD_HOLY_WATER_FILENAME = ":/graphics/treasure_card_holy_water.jpg";
-const QString Playground::TREASURE_CARD_IMMUNIZATION_POTION_FILENAME = ":/graphics/treasure_card_immunization_potion.jpg";
-const QString Playground::TREASURE_CARD_JEWELS_FILENAME = ":/graphics/treasure_card_jewels.jpg";
-const QString Playground::TREASURE_CARD_MAGIC_POTION_FILENAME = ":/graphics/treasure_card_magic_potion.jpg";
-const QString Playground::TREASURE_CARD_NOTHING_FILENAME = ":/graphics/treasure_card_nothing.jpg";
-const QString Playground::TREASURE_CARD_PHILOSOPHERS_STONE_FILENAME = ":/graphics/treasure_card_philosophers_stone.jpg";
-const QString Playground::TREASURE_CARD_POISON_FILENAME = ":/graphics/treasure_card_poison.jpg";
-const QString Playground::TREASURE_CARD_POWER_POTION_FILENAME = ":/graphics/treasure_card_power_potion.jpg";
-const QString Playground::TREASURE_CARD_RESISTANCE_POTION_FILENAME = ":/graphics/treasure_card_resistance_potion.jpg";
-const QString Playground::TREASURE_CARD_ROAMING_MONSTER_FILENAME = ":/graphics/treasure_card_roaming_monster.jpg";
-const QString Playground::TREASURE_CARD_SPRINT_POTION_FILENAME = ":/graphics/treasure_card_sprint_potion.jpg";
-const QString Playground::TREASURE_CARD_TRAP_PIT_FILENAME = ":/graphics/treasure_card_trap_pit.jpg";
-const QString Playground::TREASURE_CARD_TRAP_WALL_FILENAME = ":/graphics/treasure_card_trap_wall.jpg";
-
-const QString Playground::SPELL_CARD_AIR_BACK_FILENAME = ":/graphics/spell_card_air_back.jpg";
-const QString Playground::SPELL_CARD_WATER_BACK_FILENAME = ":/graphics/spell_card_water_back.jpg";
-const QString Playground::SPELL_CARD_EARTH_BACK_FILENAME = ":/graphics/spell_card_earth_back.jpg";
-const QString Playground::SPELL_CARD_FIRE_BACK_FILENAME = ":/graphics/spell_card_fire_back.jpg";
-
-const QString Playground::SPELL_CARD_AIR_GENIE_FILENAME = ":/graphics/spell_card_air_genie.jpg";
-const QString Playground::SPELL_CARD_AIR_STORM_FILENAME = ":/graphics/spell_card_air_storm.jpg";
-const QString Playground::SPELL_CARD_AIR_TAILWIND_FILENAME = ":/graphics/spell_card_air_tailwind.jpg";
-
-const QString Playground::SPELL_CARD_WATER_FOG_FILENAME = ":/graphics/spell_card_water_fog.jpg";
-const QString Playground::SPELL_CARD_WATER_HEALING_POTION_FILENAME = ":/graphics/spell_card_water_healing_potion.jpg";
-const QString Playground::SPELL_CARD_WATER_MORPHEUS_FILENAME = ":/graphics/spell_card_water_morpheus.jpg";
-
-const QString Playground::SPELL_CARD_EARTH_GRANITE_SKIN_FILENAME = ":/graphics/spell_card_earth_granite_skin.jpg";
-const QString Playground::SPELL_CARD_EARTH_HEALING_MAGIC_FILENAME = ":/graphics/spell_card_earth_healing_magic.jpg";
-const QString Playground::SPELL_CARD_EARTH_THROUGH_WALL_FILENAME = ":/graphics/spell_card_earth_through_wall.jpg";
-
-const QString Playground::SPELL_CARD_FIRE_BRAVENESS_FILENAME = ":/graphics/spell_card_fire_braveness.jpg";
-const QString Playground::SPELL_CARD_FIRE_BURNING_RAGE_FILENAME = ":/graphics/spell_card_fire_burning_rage.jpg";
-const QString Playground::SPELL_CARD_FIRE_FIREBALL_FILENAME = ":/graphics/spell_card_fire_fireball.jpg";
 
 Playground::Playground(QWidget* parent)
 : QLabel(parent),
@@ -99,6 +59,8 @@ Playground::Playground(QWidget* parent)
   _nodes_to_decoration(),
   _node_visibility(QuestBoard::FIELDS_X, QuestBoard::FIELDS_Y, false),
   _action_mode(ACTION_MODE_NONE),
+  _action_mode_related_hero(
+                0),
   _secret_door_image(0), // set in ::create
   _pit_trap_image(0),
   _spear_trap_image(0),
@@ -113,11 +75,7 @@ Playground::Playground(QWidget* parent)
   _table_image(0),
   _throne_image(0),
   _torture_rack_image(0),
-  _warlock_table_image(0),
-  _treasure_card_back_image(0),
-  _chest_3d_image(0),
-  _spell_card_back_images(),
-  _spell_card_images()
+  _warlock_table_image(0)
 {
     DV(("Created new Playground 0x%x", (unsigned int)this));
 }
@@ -141,24 +99,6 @@ Playground::~Playground()
 	delete(_throne_image);
 	delete(_torture_rack_image);
 	delete(_warlock_table_image);
-
-	for (map<TreasureImageID, QPixmap*>::iterator it = _treasure_card_images.begin(); it != _treasure_card_images.end(); ++it)
-	{
-	    delete it->second;
-	}
-
-    for (map<SpellCard::SpellFamily, QPixmap*>::iterator it = _spell_card_back_images.begin(); it != _spell_card_back_images.end(); ++it)
-    {
-        delete it->second;
-    }
-
-    for (map<SpellCard::SpellID, QPixmap*>::iterator it = _spell_card_images.begin(); it != _spell_card_images.end(); ++it)
-    {
-        delete it->second;
-    }
-
-    delete _treasure_card_back_image;
-    delete _chest_3d_image;
 
     // heroes are deleted by HeroQuest;
 	// monsters are deleted by Level
@@ -354,14 +294,6 @@ bool Playground::create(bool only_load_images)
         }
     }
 
-	// treasure cards
-	if (!loadTreasureCardImages())
-		return false;
-
-    // spell cards
-    if (!loadSpellCardImages())
-        return false;
-
 	return true;
 }
 
@@ -425,7 +357,7 @@ bool Playground::isWalkable(const NodeID& node_id) const
 /*!
  * \return True, if node_id is currently occupied by a creature; false otherwise.
  */
-bool Playground::isFieldOccupied(const NodeID& node_id) const
+bool Playground::isFieldOccupiedByCreature(const NodeID& node_id) const
 {
 	map<NodeID, Creature*>::const_iterator it = _nodes.find(node_id);
 	if (it != _nodes.end() && it->second != 0)
@@ -436,6 +368,34 @@ bool Playground::isFieldOccupied(const NodeID& node_id) const
 
 	//cout << "There is currently no creature at " << node_id << endl;
 	return false;
+}
+
+/*!
+ * \return True, if node_id is currently occupied by a piece of non-walkable decoration; false otherwise.
+ */
+bool Playground::isFieldOccupiedByDecoration(const NodeID& node_id) const
+{
+    map<NodeID, Decoration*>::const_iterator it = _nodes_to_decoration.find(node_id);
+    if (it != _nodes_to_decoration.end() && it->second != 0)
+    {
+        Decoration* decoration = it->second;
+        if (!decoration->isWalkable())
+        {
+            //cout << "There is a piece of non-walkable decoration at " << node_id << endl;
+            return true;
+        }
+    }
+
+    //cout << "There is currently no non-walkable piece of decoration at " << node_id << endl;
+    return false;
+}
+
+/*!
+ * \return True, if node_id is currently occupied by a creature or a piece of non-walkable decoration; false otherwise.
+ */
+bool Playground::isFieldOccupied(const NodeID& node_id) const
+{
+    return isFieldOccupiedByCreature(node_id) || isFieldOccupiedByDecoration(node_id);
 }
 
 bool Playground::containsTrap(const NodeID& node_id) const
@@ -534,15 +494,22 @@ int Playground::getFieldSize() const
 	return _quest_board->getFieldWidth();
 }
 #endif
-void Playground::setActionMode(ActionMode action_mode)
+void Playground::setActionMode(ActionMode action_mode, const Hero* related_hero)
 {
 	_action_mode = action_mode;
+    _action_mode_related_hero = related_hero;
 }
 
 Playground::ActionMode Playground::getActionMode() const
 {
 	return _action_mode;
 }
+
+const Hero* Playground::getActionModeRelatedHero() const
+{
+    return _action_mode_related_hero;
+}
+
 #if 0
 bool Playground::contains(const Vec2i& pixel) const
 {
@@ -898,7 +865,7 @@ bool Playground::computeRoamingMonsterPos(const NodeID& target_node, NodeID* roa
 		const list<NodeID>& room_fields = _quest_board->getRoomFields(_quest_board->getRoomID(target_node));
 		for (list<NodeID>::const_iterator it = room_fields.begin(); it != room_fields.end(); ++it)
 		{
-			if (!isFieldOccupied(*it))
+            if (!isFieldOccupied(*it))
 			{
 				*roaming_monster_pos = *it;
 				return true;
@@ -911,7 +878,7 @@ bool Playground::computeRoamingMonsterPos(const NodeID& target_node, NodeID* roa
 	computeViewableNodes(target_node, false, &viewable_nodes);
 	for (set<NodeID>::const_iterator it = viewable_nodes.begin(); it != viewable_nodes.end(); ++it)
 	{
-		if (!isFieldOccupied(*it))
+        if (!isFieldOccupied(*it))
 		{
 			*roaming_monster_pos = *it;
 			return true;
@@ -941,6 +908,33 @@ bool Playground::heroSeesMonster(Hero* hero) const
 	}
 
 	return false;
+}
+
+/*!
+ * @param creature
+ * @param hero
+ * @return true, iff creature is in horizontal or vertical line of sight of hero
+ */
+bool Playground::creatureIsInHorizontalOrVerticalLineOfSightOfHero(const Creature* creature, const Hero* hero) const
+{
+    const NodeID* creature_pos = getCreaturePos(*creature);
+    const NodeID* hero_pos = getCreaturePos(*hero);
+
+    // check if creature and hero are in same column or in same row
+    if (creature_pos->_ix != hero_pos->_ix && creature_pos->_iy != hero_pos->_iy)
+    {
+        // neither same column nor same row
+        return false;
+    }
+
+    // check if creature is visible by hero
+    if (!_quest_board->fieldCanBeViewedFromField(*creature_pos, *hero_pos, false))
+    {
+        // not viewed
+        return false;
+    }
+
+    return true;
 }
 
 QPixmap* Playground::getSecretDoorImage() const
@@ -1122,8 +1116,12 @@ bool Playground::save(ostream& stream) const
             StreamUtils::writeBool(stream, _node_visibility[y][x]);
         }
 
-    //! action mode
+    // _action_mode
     StreamUtils::writeUInt(stream, uint(_action_mode));
+    // _action_mode_related_hero
+    uint related_hero_referencing_id =
+            _action_mode_related_hero != 0 ? _action_mode_related_hero->getReferencingID() : UINT_MAX;
+    StreamUtils::writeUInt(stream, related_hero_referencing_id);
 
     _quest_board->save(stream);
 
@@ -1183,11 +1181,20 @@ bool Playground::load(istream& stream)
         }
     DV(("Playground::load: node_visibility finished"));
 
-    //! action mode
+    // _action_mode
     uint action_mode_uint;
     StreamUtils::readUInt(stream, &action_mode_uint);
     _action_mode = ActionMode(action_mode_uint);
     DV(("Playground::load: action_mode %d", action_mode_uint));
+
+    // _action_mode_related_hero
+    uint ref_id;
+    StreamUtils::readUInt(stream, &ref_id);
+    _action_mode_related_hero = 0;
+    if (ref_id != UINT_MAX)
+    {
+        _action_mode_related_hero = HeroQuestLevelWindow::_hero_quest->getHero(ref_id);
+    }
 
     if (_quest_board != 0)
     {
@@ -1258,14 +1265,22 @@ void Playground::paintEvent(QPaintEvent* event)
         for (uint i = 0; i < traps.size(); ++i)
         {
             Trap* current_trap = traps[i];
+
+            //ACTION_MODE_SELECT_ADJACENT_FIELD
+            // pit trap selection, visible, and adjacent to hero?
+            bool highlight = HeroQuestLevelWindow::_hero_quest->getUserInteractionMode()
+                    == HeroQuestLevelWindow::USER_INTERACTION_SELECT_ADJACENT_PIT_TRAP && current_trap->getVisible()
+                    && _quest_board->getBoardGraph()->getNode(current_trap->getNodeID()).isNeighbor(
+                            *(getCreaturePos(*getActionModeRelatedHero())));
+            Qt::GlobalColor highlight_color = Qt::blue;
+
             if (!current_trap->isSpearTrap()) // spear trap is drawn over creatures (=> see further below)
-                current_trap->redraw(painter);
+                current_trap->redraw(painter, highlight, highlight_color);
         }
     }
 
     // creatures
-    int field_width = _quest_board->getFieldWidth();
-    int field_height = _quest_board->getFieldHeight();
+    int field_size = ParameterStorage::instance->getFieldSize();
     for (map<Creature*, NodeID>::iterator it = _creatures.begin(); it != _creatures.end(); ++it)
     {
         Creature* creature = it->first;
@@ -1276,8 +1291,7 @@ void Playground::paintEvent(QPaintEvent* event)
         }
         const NodeID& node_id = it->second;
 
-        int max_draw_width = field_width - (0.15 * field_width);
-        int max_draw_height = field_height - (0.15 * field_height);
+        int max_draw_size = field_size - (0.15 * field_size);
 
         bool highlight = (HeroQuestLevelWindow::_hero_quest->getLevel()->getCurrentlyActingCreature() == creature)
                 || (HeroQuestLevelWindow::_hero_quest->getUserInteractionMode()
@@ -1285,14 +1299,21 @@ void Playground::paintEvent(QPaintEvent* event)
                 || (HeroQuestLevelWindow::_hero_quest->getUserInteractionMode()
                         == HeroQuestLevelWindow::USER_INTERACTION_SELECT_CREATURE_OR_DOOR)
                 || (HeroQuestLevelWindow::_hero_quest->getUserInteractionMode()
-                        == HeroQuestLevelWindow::USER_INTERACTION_SELECT_HERO && creature->isHero());
-        Qt::GlobalColor highlight_color = (_action_mode == ACTION_MODE_SELECT_FIELD_OR_DOOR) ? Qt::blue : Qt::red;
+                                == HeroQuestLevelWindow::USER_INTERACTION_SELECT_HERO && creature->isHero())
+                        || (HeroQuestLevelWindow::_hero_quest->getUserInteractionMode()
+                                == HeroQuestLevelWindow::USER_INTERACTION_SELECT_CREATURE_IN_HORIZONTAL_OR_VERTICAL_LINE_OF_SIGHT
+                                && creatureIsInHorizontalOrVerticalLineOfSightOfHero(creature,
+                                        getActionModeRelatedHero()));
+        Qt::GlobalColor highlight_color =
+                (_action_mode == ACTION_MODE_SELECT_FIELD_OR_DOOR)
+                        || (_action_mode == ACTION_MODE_SELECT_FIELD_IN_VISUAL_LINE_OF_SIGHT
+                                && creature != getActionModeRelatedHero()) ? Qt::blue : Qt::red;
 
         creature->redrawCentered(
                 painter,
                 _quest_board->getFieldCenter(node_id),
-                max_draw_width,
-                max_draw_height,
+            max_draw_size,
+            max_draw_size,
                 highlight, highlight_color);
     }
 
@@ -1305,7 +1326,7 @@ void Playground::paintEvent(QPaintEvent* event)
         {
             Trap* current_trap = traps[i];
             if (current_trap->isSpearTrap())
-                current_trap->redraw(painter);
+                current_trap->redraw(painter, false, Qt::black /*dummy*/);
         }
     }
 
@@ -1386,434 +1407,12 @@ void Playground::paintEvent(QPaintEvent* event)
     {
         const NodeID& field = viewed_fields[i];
         Vec2i field_center(_quest_board->getFieldCenter(field));
-        int field_width = _quest_board->getFieldCorner3(field).x - _quest_board->getFieldCorner0(field).x;
+        int field_size = _quest_board->getFieldCorner3(field).x - _quest_board->getFieldCorner0(field).x;
         int field_height = _quest_board->getFieldCorner3(field).y - _quest_board->getFieldCorner0(field).y;
-        int min_field_size = min(field_width, field_height);
+        int min_field_size = min(field_size, field_height);
         int circle_radius = int(min_field_size / 2 * 0.7);
         ALLEGRO_COLOR color = al_map_rgb(0, 0, 255);
         al_draw_filled_circle(field_center.x, field_center.y, circle_radius, color);
     }
 #endif
 }
-
-/*!
- * Loads all treasure card images. True, if everything has been loaded successfully.
- */
-bool Playground::loadTreasureCardImages()
-{
-	// treasure_card_back
-    if (_treasure_card_back_image == 0) {
-        _treasure_card_back_image = new QPixmap(TREASURE_CARD_BACK_FILENAME);
-        if (_treasure_card_back_image == 0)
-        {
-            cout << qPrintable(TREASURE_CARD_BACK_FILENAME)
-                    << " not found or failed to load" << endl;
-            return false;
-        }
-    }
-
-    // chest_3d
-    if (_chest_3d_image == 0)
-    {
-        _chest_3d_image = new QPixmap(TREASURE_CHEST_3D_FILENAME);
-        if (_chest_3d_image == 0)
-        {
-            cout << qPrintable(TREASURE_CHEST_3D_FILENAME) << " not found or failed to load" << endl;
-            return false;
-        }
-    }
-
-	QPixmap* tmp_image = 0;
-
-	// treasure_card_braveness_potion
-    if (_treasure_card_images.find(TREASURE_CARD_BRAVENESS_POTION)
-            == _treasure_card_images.end())
-    {
-        tmp_image = new QPixmap(TREASURE_CARD_BRAVENESS_POTION_FILENAME);
-        if (tmp_image == 0)
-        {
-            cout << qPrintable(TREASURE_CARD_BRAVENESS_POTION_FILENAME)
-                    << " not found or failed to load" << endl;
-            return false;
-        }
-        _treasure_card_images[TREASURE_CARD_BRAVENESS_POTION] = tmp_image;
-    }
-
-	// treasure_card_gemstone
-    if (_treasure_card_images.find(TREASURE_CARD_GEMSTONE)
-            == _treasure_card_images.end())
-    {
-        tmp_image = new QPixmap(TREASURE_CARD_GEMSTONE_FILENAME);
-        if (tmp_image == 0)
-        {
-            cout << qPrintable(TREASURE_CARD_GEMSTONE_FILENAME)
-                    << " not found or failed to load" << endl;
-            return false;
-        }
-        _treasure_card_images[TREASURE_CARD_GEMSTONE] = tmp_image;
-    }
-
-	// treasure_card_gold
-    if (_treasure_card_images.find(TREASURE_CARD_GOLD)
-            == _treasure_card_images.end())
-    {
-        tmp_image = new QPixmap(TREASURE_CARD_GOLD_FILENAME);
-        if (tmp_image == 0)
-        {
-            cout << qPrintable(TREASURE_CARD_GOLD_FILENAME)
-                    << " not found or failed to load" << endl;
-            return false;
-        }
-        _treasure_card_images[TREASURE_CARD_GOLD] = tmp_image;
-    }
-
-	// treasure_card_gold_treasure
-    if (_treasure_card_images.find(TREASURE_CARD_GOLD_TREASURE)
-            == _treasure_card_images.end())
-    {
-        tmp_image = new QPixmap(TREASURE_CARD_GOLD_TREASURE_FILENAME);
-        if (tmp_image == 0)
-        {
-            cout << qPrintable(TREASURE_CARD_GOLD_TREASURE_FILENAME)
-                    << " not found or failed to load" << endl;
-            return false;
-        }
-        _treasure_card_images[TREASURE_CARD_GOLD_TREASURE] = tmp_image;
-    }
-
-	// treasure_card_healing_potion
-    if (_treasure_card_images.find(TREASURE_CARD_HEALING_POTION)
-            == _treasure_card_images.end())
-    {
-        tmp_image = new QPixmap(TREASURE_CARD_HEALING_POTION_FILENAME);
-        if (tmp_image == 0)
-        {
-            cout << qPrintable(TREASURE_CARD_HEALING_POTION_FILENAME)
-                    << " not found or failed to load" << endl;
-            return false;
-        }
-        _treasure_card_images[TREASURE_CARD_HEALING_POTION] = tmp_image;
-    }
-
-	// treasure_card_holy_water
-    if (_treasure_card_images.find(TREASURE_CARD_HOLY_WATER)
-            == _treasure_card_images.end())
-    {
-        tmp_image = new QPixmap(TREASURE_CARD_HOLY_WATER_FILENAME);
-        if (tmp_image == 0)
-        {
-            cout << qPrintable(TREASURE_CARD_HOLY_WATER_FILENAME)
-                    << " not found or failed to load" << endl;
-            return false;
-        }
-        _treasure_card_images[TREASURE_CARD_HOLY_WATER] = tmp_image;
-    }
-
-	// treasure_card_immunization_potion
-    if (_treasure_card_images.find(TREASURE_CARD_IMMUNIZATION_POTION)
-            == _treasure_card_images.end())
-    {
-        tmp_image = new QPixmap(TREASURE_CARD_IMMUNIZATION_POTION_FILENAME);
-        if (tmp_image == 0)
-        {
-            cout << qPrintable(TREASURE_CARD_IMMUNIZATION_POTION_FILENAME)
-                    << " not found or failed to load" << endl;
-            return false;
-        }
-        _treasure_card_images[TREASURE_CARD_IMMUNIZATION_POTION] = tmp_image;
-    }
-
-	// treasure_card_jewels
-    if (_treasure_card_images.find(TREASURE_CARD_JEWELS)
-            == _treasure_card_images.end())
-    {
-        tmp_image = new QPixmap(TREASURE_CARD_JEWELS_FILENAME);
-        if (tmp_image == 0)
-        {
-            cout << qPrintable(TREASURE_CARD_JEWELS_FILENAME)
-                    << " not found or failed to load" << endl;
-            return false;
-        }
-        _treasure_card_images[TREASURE_CARD_JEWELS] = tmp_image;
-    }
-
-	// treasure_card_magic_potion
-    if (_treasure_card_images.find(TREASURE_CARD_MAGIC_POTION)
-            == _treasure_card_images.end())
-    {
-        tmp_image = new QPixmap(TREASURE_CARD_MAGIC_POTION_FILENAME);
-        if (tmp_image == 0)
-        {
-            cout << qPrintable(TREASURE_CARD_MAGIC_POTION_FILENAME)
-                    << " not found or failed to load" << endl;
-            return false;
-        }
-        _treasure_card_images[TREASURE_CARD_MAGIC_POTION] = tmp_image;
-    }
-
-    // treasure_card_nothing
-    if (_treasure_card_images.find(TREASURE_CARD_NOTHING)
-            == _treasure_card_images.end())
-    {
-        tmp_image = new QPixmap(TREASURE_CARD_NOTHING_FILENAME);
-        if (tmp_image == 0)
-        {
-            cout << qPrintable(TREASURE_CARD_NOTHING_FILENAME)
-                    << " not found or failed to load" << endl;
-            return false;
-        }
-        _treasure_card_images[TREASURE_CARD_NOTHING] = tmp_image;
-    }
-
-	// treasure_card_philosophers_stone
-    if (_treasure_card_images.find(TREASURE_CARD_PHILOSOPHERS_STONE)
-            == _treasure_card_images.end())
-    {
-        tmp_image = new QPixmap(TREASURE_CARD_PHILOSOPHERS_STONE_FILENAME);
-        if (tmp_image == 0)
-        {
-            cout << qPrintable(TREASURE_CARD_PHILOSOPHERS_STONE_FILENAME)
-                    << " not found or failed to load" << endl;
-            return false;
-        }
-        _treasure_card_images[TREASURE_CARD_PHILOSOPHERS_STONE] = tmp_image;
-    }
-
-	// treasure_card_poison
-    if (_treasure_card_images.find(TREASURE_CARD_POISON)
-            == _treasure_card_images.end())
-    {
-        tmp_image = new QPixmap(TREASURE_CARD_POISON_FILENAME);
-        if (tmp_image == 0)
-        {
-            cout << qPrintable(TREASURE_CARD_POISON_FILENAME)
-                    << " not found or failed to load" << endl;
-            return false;
-        }
-        _treasure_card_images[TREASURE_CARD_POISON] = tmp_image;
-    }
-
-	// treasure_card_power_potion
-    if (_treasure_card_images.find(TREASURE_CARD_POWER_POTION)
-            == _treasure_card_images.end())
-    {
-        tmp_image = new QPixmap(TREASURE_CARD_POWER_POTION_FILENAME);
-        if (tmp_image == 0)
-        {
-            cout << qPrintable(TREASURE_CARD_POWER_POTION_FILENAME)
-                    << " not found or failed to load" << endl;
-            return false;
-        }
-        _treasure_card_images[TREASURE_CARD_POWER_POTION] = tmp_image;
-    }
-
-	// treasure_card_resistance_potion
-    if (_treasure_card_images.find(TREASURE_CARD_RESISTANCE_POTION)
-            == _treasure_card_images.end())
-    {
-        tmp_image = new QPixmap(TREASURE_CARD_RESISTANCE_POTION_FILENAME);
-        if (tmp_image == 0)
-        {
-            cout << qPrintable(TREASURE_CARD_RESISTANCE_POTION_FILENAME)
-                    << " not found or failed to load" << endl;
-            return false;
-        }
-        _treasure_card_images[TREASURE_CARD_RESISTANCE_POTION] = tmp_image;
-    }
-
-	// treasure_card_roaming_monster
-    if (_treasure_card_images.find(TREASURE_CARD_ROAMING_MONSTER)
-            == _treasure_card_images.end())
-    {
-        tmp_image = new QPixmap(TREASURE_CARD_ROAMING_MONSTER_FILENAME);
-        if (tmp_image == 0)
-        {
-            cout << qPrintable(TREASURE_CARD_ROAMING_MONSTER_FILENAME)
-                    << " not found or failed to load" << endl;
-            return false;
-        }
-        _treasure_card_images[TREASURE_CARD_ROAMING_MONSTER] = tmp_image;
-    }
-
-    // treasure_card_sprint_potion
-    if (_treasure_card_images.find(TREASURE_CARD_SPRINT_POTION)
-            == _treasure_card_images.end())
-    {
-        tmp_image = new QPixmap(TREASURE_CARD_SPRINT_POTION_FILENAME);
-        if (tmp_image == 0)
-        {
-            cout << qPrintable(TREASURE_CARD_SPRINT_POTION_FILENAME)
-                    << " not found or failed to load" << endl;
-            return false;
-        }
-        _treasure_card_images[TREASURE_CARD_SPRINT_POTION] = tmp_image;
-    }
-
-	// treasure_card_trap_pit
-    if (_treasure_card_images.find(TREASURE_CARD_TRAP_PIT)
-            == _treasure_card_images.end())
-    {
-        tmp_image = new QPixmap(TREASURE_CARD_TRAP_PIT_FILENAME);
-        if (tmp_image == 0)
-        {
-            cout << qPrintable(TREASURE_CARD_TRAP_PIT_FILENAME)
-                    << " not found or failed to load" << endl;
-            return false;
-        }
-        _treasure_card_images[TREASURE_CARD_TRAP_PIT] = tmp_image;
-    }
-
-	// treasure_card_trap_wall
-    if (_treasure_card_images.find(TREASURE_CARD_TRAP_WALL)
-            == _treasure_card_images.end())
-    {
-        tmp_image = new QPixmap(TREASURE_CARD_TRAP_WALL_FILENAME);
-        if (tmp_image == 0)
-        {
-            cout << qPrintable(TREASURE_CARD_TRAP_WALL_FILENAME)
-                    << " not found or failed to load" << endl;
-            return false;
-        }
-        _treasure_card_images[TREASURE_CARD_TRAP_WALL] = tmp_image;
-    }
-
-#if 0
-	cout << "_treasure_card_images content:" << endl;
-	for (map<TreasureImageID, QPixmap*>::const_iterator it = _treasure_card_images.begin(); it != _treasure_card_images.end(); ++it)
-	{
-		cout << "  id " << int(it->first) << endl;
-	}
-#endif
-
-	return true;
-}
-
-void Playground::addSpellCardBackImageIfNotYetPresent(
-        const SpellCard::SpellFamily &spell_family, const QString &filename)
-{
-    if (_spell_card_back_images.find(spell_family)
-            == _spell_card_back_images.end())
-    _spell_card_back_images[spell_family] = new QPixmap(filename);
-}
-
-void Playground::addSpellCardImageIfNotYetPresent(
-        const SpellCard::SpellID &spell_id, const QString &filename)
-{
-    if (_spell_card_images.find(spell_id) == _spell_card_images.end())
-        _spell_card_images[spell_id] = new QPixmap(filename);
-}
-
-/*!
- * Loads all spell card images. True, if everything has been loaded successfully.
- */
-bool Playground::loadSpellCardImages()
-{
-    // _spell_card_back_images
-    addSpellCardBackImageIfNotYetPresent(SpellCard::AIR,
-            SPELL_CARD_AIR_BACK_FILENAME);
-    addSpellCardBackImageIfNotYetPresent(SpellCard::WATER,
-            SPELL_CARD_WATER_BACK_FILENAME);
-    addSpellCardBackImageIfNotYetPresent(SpellCard::EARTH,
-            SPELL_CARD_EARTH_BACK_FILENAME);
-    addSpellCardBackImageIfNotYetPresent(SpellCard::FIRE,
-            SPELL_CARD_FIRE_BACK_FILENAME);
-    for (map<SpellCard::SpellFamily, QPixmap*>::const_iterator it = _spell_card_back_images.begin(); it != _spell_card_back_images.end(); ++it)
-    {
-        if (it->second == 0)
-        {
-            cout << "Spell card back image for spell family " << uint(it->first) << " not found or failed to load" << endl;
-            return false;
-        }
-    }
-
-    // _spell_card_images
-    addSpellCardImageIfNotYetPresent(SpellCard::GENIE,
-            SPELL_CARD_AIR_GENIE_FILENAME);
-    addSpellCardImageIfNotYetPresent(SpellCard::STORM,
-            SPELL_CARD_AIR_STORM_FILENAME);
-    addSpellCardImageIfNotYetPresent(SpellCard::TAILWIND,
-            SPELL_CARD_AIR_TAILWIND_FILENAME);
-
-    addSpellCardImageIfNotYetPresent(SpellCard::FOG,
-            SPELL_CARD_WATER_FOG_FILENAME);
-    addSpellCardImageIfNotYetPresent(SpellCard::HEALING_POTION,
-            SPELL_CARD_WATER_HEALING_POTION_FILENAME);
-    addSpellCardImageIfNotYetPresent(SpellCard::MORPHEUS,
-            SPELL_CARD_WATER_MORPHEUS_FILENAME);
-
-    addSpellCardImageIfNotYetPresent(SpellCard::GRANITE_SKIN,
-            SPELL_CARD_EARTH_GRANITE_SKIN_FILENAME);
-    addSpellCardImageIfNotYetPresent(SpellCard::HEALING_MAGIC,
-            SPELL_CARD_EARTH_HEALING_MAGIC_FILENAME);
-    addSpellCardImageIfNotYetPresent(SpellCard::THROUGH_WALL,
-            SPELL_CARD_EARTH_THROUGH_WALL_FILENAME);
-
-    addSpellCardImageIfNotYetPresent(SpellCard::BRAVENESS,
-            SPELL_CARD_FIRE_BRAVENESS_FILENAME);
-    addSpellCardImageIfNotYetPresent(SpellCard::BURNING_RAGE,
-            SPELL_CARD_FIRE_BURNING_RAGE_FILENAME);
-    addSpellCardImageIfNotYetPresent(SpellCard::FIREBALL,
-            SPELL_CARD_FIRE_FIREBALL_FILENAME);
-    for (map<SpellCard::SpellID, QPixmap*>::const_iterator it = _spell_card_images.begin(); it != _spell_card_images.end(); ++it)
-    {
-        if (it->second == 0)
-        {
-            cout << "Spell card image for spell ID " << uint(it->first) << " not found or failed to load" << endl;
-            return false;
-        }
-    }
-
-    return true;
-}
-
-QPixmap* Playground::getTreasureCardBackImage() const
-{
-	return _treasure_card_back_image;
-}
-
-QPixmap* Playground::getTreasureCardImage(const TreasureImageID& id) const
-{
-#if 0
-	cout << "_treasure_card_images content:" << endl;
-	for (map<TreasureImageID, QPixmap*>::const_iterator it = _treasure_card_images.begin(); it != _treasure_card_images.end(); ++it)
-	{
-		cout << "  id " << int(it->first) << endl;
-	}
-	cout << "requested: id " << int(id) << endl;
-#endif
-	map<TreasureImageID, QPixmap*>::const_iterator it = _treasure_card_images.find(id);
-	if (it == _treasure_card_images.end())
-	{
-		cout << "Error: treasure card ID " << int(id) << " not found in _treasure_card_images map!" << endl;
-		return 0;
-	}
-	return it->second;
-}
-
-QPixmap* Playground::getChest3DImage() const
-{
-    return _chest_3d_image;
-}
-
-QPixmap* Playground::getSpellCardBackImage(const SpellCard::SpellFamily& spell_family) const
-{
-    map<SpellCard::SpellFamily, QPixmap*>::const_iterator it = _spell_card_back_images.find(spell_family);
-    if (it == _spell_card_back_images.end())
-    {
-        cout << "Error: spell card family " << uint(spell_family) << " not found in _spell_card_back_images map!" << endl;
-        return 0;
-    }
-    return it->second;
-}
-
-QPixmap* Playground::getSpellCardImage(const SpellCard::SpellID& spell_id) const
-{
-    map<SpellCard::SpellID, QPixmap*>::const_iterator it = _spell_card_images.find(spell_id);
-    if (it == _spell_card_images.end())
-    {
-        cout << "Error: spell card ID " << uint(spell_id) << " not found in _spell_card_images map!" << endl;
-        return 0;
-    }
-    return it->second;
-}
-

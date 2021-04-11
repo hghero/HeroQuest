@@ -7,6 +7,8 @@
 
 #include "SpellCard.h"
 
+class QPixmap;
+
 /*!
  * Needed to deal with SpellCards before a level has begun.
  * Simply holds the spell cards before and after a level.
@@ -37,34 +39,32 @@ class SpellCardStorage
     static const QString SPELL_CARD_FIRE_FIREBALL_FILENAME;
 
     SpellCardStorage();
-    ~SpellCardStorage();
+    virtual ~SpellCardStorage();
 
     bool loadSpellCards();
-    std::vector<SpellCard>& getSpellCards();
+    std::vector<SpellCard>& getSpellCardStock();
+    std::vector<SpellCard>& getSpellCardDeposition();
+    void removeSpellCardsFromStock(const std::vector<SpellCard>& spell_cards);
+
+    QPixmap* getSpellCardBackImage(const SpellCard::SpellFamily& spell_family) const;
+    QPixmap* getSpellCardImage(const SpellCard::SpellID& spell_id) const;
+
+    virtual bool save(std::ostream& stream) const;
+    virtual bool load(std::istream& stream);
+
+    static SpellCardStorage* instance;
 
     private:
-    std::vector<SpellCard> _spell_cards;
+    void addSpellCardBackImageIfNotYetPresent(const SpellCard::SpellFamily& spell_family, const QString& filename);
 
-    QPixmap* _spell_card_air_back_image;
-    QPixmap* _spell_card_water_back_image;
-    QPixmap* _spell_card_earth_back_image;
-    QPixmap* _spell_card_fire_back_image;
+    void addSpellCardImageIfNotYetPresent(const SpellCard::SpellID& spell_id, const QString& filename);
 
-    QPixmap* _spell_card_air_genie_image;
-    QPixmap* _spell_card_air_storm_image;
-    QPixmap* _spell_card_air_tailwind_image;
+    std::vector<SpellCard> _spell_card_stock;
+    std::vector<SpellCard> _spell_card_deposition;
 
-    QPixmap* _spell_card_water_fog_image;
-    QPixmap* _spell_card_water_morpheus_image;
-    QPixmap* _spell_card_water_healing_potion_image;
-
-    QPixmap* _spell_card_earth_granite_skin_image;
-    QPixmap* _spell_card_earth_through_wall_image;
-    QPixmap* _spell_card_earth_healing_magic_image;
-
-    QPixmap* _spell_card_fire_braveness_image;
-    QPixmap* _spell_card_fire_burning_rage_image;
-    QPixmap* _spell_card_fire_fireball_image;
+    //! Spell card images
+    std::map<SpellCard::SpellFamily, QPixmap*> _spell_card_back_images;
+    std::map<SpellCard::SpellID, QPixmap*> _spell_card_images;
 };
 
 #endif

@@ -9,6 +9,8 @@
 #include "Debug.h"
 #include "Level.h"
 #include "TreasureDescription.h"
+#include "TreasureDataTypes.h"
+#include "Hero.h"
 
 using namespace std;
 
@@ -58,38 +60,38 @@ bool TreasureCard::isTreasureCard() const
 bool TreasureCard::isApplyableFromInventory() const
 {
     //cout << "id: " << qPrintable(_treasure_card_description.getID()) << endl;
-    return _treasure_description.getTreasureImageID() != Playground::TREASURE_CARD_RESISTANCE_POTION;
+    return _treasure_description.getTreasureImageID() != TreasureDataTypes::TREASURE_CARD_RESISTANCE_POTION;
 }
 
 TreasureCard::Characteristic TreasureCard::getCharacteristic() const
 {
     TreasureCard::Characteristic characteristic = BAD_CHARACTERISTIC;
 
-    const Playground::TreasureImageID& image_id = _treasure_description.getTreasureImageID();
+    const TreasureDataTypes::TreasureImageID& image_id = _treasure_description.getTreasureImageID();
     switch (image_id)
     {
-        case Playground::TREASURE_CARD_UNKNOWN:
-        case Playground::TREASURE_CARD_NOTHING:
-        case Playground::TREASURE_CARD_GOLD:
-        case Playground::TREASURE_CARD_JEWELS:
-        case Playground::TREASURE_CARD_GEMSTONE:
-        case Playground::TREASURE_CARD_GOLD_TREASURE:
-        case Playground::TREASURE_CARD_BRAVENESS_POTION:
-        case Playground::TREASURE_CARD_HEALING_POTION:
-        case Playground::TREASURE_CARD_HOLY_WATER:
-        case Playground::TREASURE_CARD_IMMUNIZATION_POTION:
-        case Playground::TREASURE_CARD_MAGIC_POTION:
-        case Playground::TREASURE_CARD_PHILOSOPHERS_STONE:
-        case Playground::TREASURE_CARD_POWER_POTION:
-        case Playground::TREASURE_CARD_RESISTANCE_POTION:
-        case Playground::TREASURE_CARD_SPRINT_POTION:
+        case TreasureDataTypes::TREASURE_CARD_UNKNOWN:
+        case TreasureDataTypes::TREASURE_CARD_NOTHING:
+        case TreasureDataTypes::TREASURE_CARD_GOLD:
+        case TreasureDataTypes::TREASURE_CARD_JEWELS:
+        case TreasureDataTypes::TREASURE_CARD_GEMSTONE:
+        case TreasureDataTypes::TREASURE_CARD_GOLD_TREASURE:
+        case TreasureDataTypes::TREASURE_CARD_BRAVENESS_POTION:
+        case TreasureDataTypes::TREASURE_CARD_HEALING_POTION:
+        case TreasureDataTypes::TREASURE_CARD_HOLY_WATER:
+        case TreasureDataTypes::TREASURE_CARD_IMMUNIZATION_POTION:
+        case TreasureDataTypes::TREASURE_CARD_MAGIC_POTION:
+        case TreasureDataTypes::TREASURE_CARD_PHILOSOPHERS_STONE:
+        case TreasureDataTypes::TREASURE_CARD_POWER_POTION:
+        case TreasureDataTypes::TREASURE_CARD_RESISTANCE_POTION:
+        case TreasureDataTypes::TREASURE_CARD_SPRINT_POTION:
             characteristic = GOOD_CHARACTERISTIC;
             break;
 
-        case Playground::TREASURE_CARD_POISON:
-        case Playground::TREASURE_CARD_TRAP_WALL:
-        case Playground::TREASURE_CARD_TRAP_PIT:
-        case Playground::TREASURE_CARD_ROAMING_MONSTER:
+        case TreasureDataTypes::TREASURE_CARD_POISON:
+        case TreasureDataTypes::TREASURE_CARD_TRAP_WALL:
+        case TreasureDataTypes::TREASURE_CARD_TRAP_PIT:
+        case TreasureDataTypes::TREASURE_CARD_ROAMING_MONSTER:
             characteristic = BAD_CHARACTERISTIC;
             break;
     }
@@ -448,7 +450,7 @@ bool TreasureCard::executeInventoryActions(Hero* user) const
 		else if (item.compare("POWER_POTION") == 0)
 		{
 		    // next attack: +2 combat dice
-		    user->setNumDiceAttackExtra(2);
+            user->setNumDiceAttackExtra(user->getNumDiceAttackExtra() + 2);
 		}
 		else if (item.compare("RESISTANCE_POTION") == 0)
 		{

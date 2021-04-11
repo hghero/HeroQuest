@@ -4,6 +4,8 @@
 #include "InventoryItem.h"
 #include "TreasureDescription.h"
 
+class Hero;
+
 /*!
  * An item storable in a hero's inventory.
  */

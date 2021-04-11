@@ -12,6 +12,7 @@
     <file alias="graphics/chest_3d.tga">../resources/graphics/chest_3d.tga</file>
     <file alias="graphics/cupboard.jpg">../resources/graphics/cupboard.jpg</file>
     <file alias="graphics/debris.jpg">../resources/graphics/debris.jpg</file>
+    
     <file alias="graphics/dice_five.jpg">../resources/graphics/dice_five.jpg</file>
     <file alias="graphics/dice_four.jpg">../resources/graphics/dice_four.jpg</file>
     <file alias="graphics/dice_human_shield.jpg">../resources/graphics/dice_human_shield.jpg</file>
@@ -21,6 +22,7 @@
     <file alias="graphics/dice_skull.jpg">../resources/graphics/dice_skull.jpg</file>
     <file alias="graphics/dice_three.jpg">../resources/graphics/dice_three.jpg</file>
     <file alias="graphics/dice_two.jpg">../resources/graphics/dice_two.jpg</file>
+    
     <file alias="graphics/dwarf.jpg">../resources/graphics/dwarf.jpg</file>
     <file alias="graphics/fimir.jpg">../resources/graphics/fimir.jpg</file>
     <file alias="graphics/fireplace.tga">../resources/graphics/fireplace.tga</file>
@@ -35,6 +37,7 @@
     <file alias="graphics/secret_door_top.jpg">../resources/graphics/secret_door_top.jpg</file>
     <file alias="graphics/skeleton.jpg">../resources/graphics/skeleton.jpg</file>
     <file alias="graphics/spear_trap.tga">../resources/graphics/spear_trap.tga</file>
+    
     <file alias="graphics/spell_card_air_back.jpg">../resources/graphics/spell_card_air_back.jpg</file>
     <file alias="graphics/spell_card_water_back.jpg">../resources/graphics/spell_card_water_back.jpg</file>
     <file alias="graphics/spell_card_earth_back.jpg">../resources/graphics/spell_card_earth_back.jpg</file>
@@ -56,6 +59,7 @@
     <file alias="graphics/table.tga">../resources/graphics/table.tga</file>
     <file alias="graphics/throne.tga">../resources/graphics/throne.tga</file>
     <file alias="graphics/torture_rack.tga">../resources/graphics/torture_rack.tga</file>
+    
     <file alias="graphics/treasure_card_back.jpg">../resources/graphics/treasure_card_back.jpg</file>
     <file alias="graphics/treasure_card_braveness_potion.jpg">../resources/graphics/treasure_card_braveness_potion.jpg</file>
     <file alias="graphics/treasure_card_gemstone.jpg">../resources/graphics/treasure_card_gemstone.jpg</file>
@@ -74,8 +78,23 @@
     <file alias="graphics/treasure_card_sprint_potion.jpg">../resources/graphics/treasure_card_sprint_potion.jpg</file>
     <file alias="graphics/treasure_card_trap_pit.jpg">../resources/graphics/treasure_card_trap_pit.jpg</file>
     <file alias="graphics/treasure_card_trap_wall.jpg">../resources/graphics/treasure_card_trap_wall.jpg</file>
+    
     <file alias="graphics/warlock_table.jpg">../resources/graphics/warlock_table.jpg</file>
     <file alias="graphics/zombie.jpg">../resources/graphics/zombie.jpg</file>
+    
+    <file alias="graphics/equipment_card_armor.jpg">../resources/graphics/equipment_card_armor.jpg</file>
+    <file alias="graphics/equipment_card_back.jpg">../resources/graphics/equipment_card_back.jpg</file>
+    <file alias="graphics/equipment_card_battle_axe.jpg">../resources/graphics/equipment_card_battle_axe.jpg</file>
+    <file alias="graphics/equipment_card_chain_armor.jpg">../resources/graphics/equipment_card_chain_armor.jpg</file>
+    <file alias="graphics/equipment_card_club.jpg">../resources/graphics/equipment_card_club.jpg</file>
+    <file alias="graphics/equipment_card_crossbow.jpg">../resources/graphics/equipment_card_crossbow.jpg</file>
+    <file alias="graphics/equipment_card_hand_axe.jpg">../resources/graphics/equipment_card_hand_axe.jpg</file>
+    <file alias="graphics/equipment_card_helmet.jpg">../resources/graphics/equipment_card_helmet.jpg</file>
+    <file alias="graphics/equipment_card_lance.jpg">../resources/graphics/equipment_card_lance.jpg</file>
+    <file alias="graphics/equipment_card_long_sword.jpg">../resources/graphics/equipment_card_long_sword.jpg</file>
+    <file alias="graphics/equipment_card_shield.jpg">../resources/graphics/equipment_card_shield.jpg</file>
+    <file alias="graphics/equipment_card_short_sword.jpg">../resources/graphics/equipment_card_short_sword.jpg</file>
+    <file alias="graphics/equipment_card_toolbox.jpg">../resources/graphics/equipment_card_toolbox.jpg</file>
     
     <file alias="sounds/attack_defended.wav">../resources/sounds/attack_defended.wav</file>
     <file alias="sounds/attack_hero_big_decrease_life_points.wav">../resources/sounds/attack_hero_big_decrease_life_points.wav</file>
@@ -95,6 +114,7 @@
     <file alias="sounds/spear_trap_triggers.wav">../resources/sounds/spear_trap_triggers.wav</file>
     <file alias="sounds/throw_dice.wav">../resources/sounds/throw_dice.wav</file>
     <file alias="sounds/cast_spell.wav">../resources/sounds/cast_spell.wav</file>
+    <file alias="sounds/disarm_pit_trap.wav">../resources/sounds/disarm_pit_trap.wav</file>
     
     <file alias="treasure_cards/braveness_potion.txt">../resources/treasure_cards/braveness_potion.txt</file>
     <file alias="treasure_cards/gold_10_vest.txt">../resources/treasure_cards/gold_10_vest.txt</file>

@@ -224,14 +224,15 @@ void HeroStatisticPane::update()
         _num_move_points_remaining_label->setStyleSheet(HeroQuestLevelWindow::STATISTIC_BODY_STYLE_INACTIVE);
 
     // num_dice_attack
-    _num_dice_attack_label->setText(QString("Attack dice: %1").arg(_hero->getNumDiceAttack()));
+    _num_dice_attack_label->setText(
+            QString("Attack dice: %1").arg(_hero->getHighestNumDiceRegularAttack() + _hero->getNumDiceAttackExtra()));
     if (hero_is_active)
         _num_dice_attack_label->setStyleSheet(HeroQuestLevelWindow::STATISTIC_BODY_STYLE_ACTIVE);
     else
         _num_dice_attack_label->setStyleSheet(HeroQuestLevelWindow::STATISTIC_BODY_STYLE_INACTIVE);
 
     // num_dice_defend
-    _num_dice_defend_label->setText(QString("Defend dice: %1").arg(_hero->getNumDiceDefend()));
+    _num_dice_defend_label->setText(QString("Defend dice: %1").arg(_hero->getHighestNumDiceDefend()));
     if (hero_is_active)
         _num_dice_defend_label->setStyleSheet(HeroQuestLevelWindow::STATISTIC_BODY_STYLE_ACTIVE);
     else

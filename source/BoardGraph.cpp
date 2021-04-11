@@ -1,9 +1,12 @@
 #include "BoardGraph.h"
+
+#include <limits.h>
+#include <list>
+#include <cstdlib>
+
 #include "QuestBoard.h"
 #include "Playground.h"
 #include "HeroQuestLevelWindow.h"
-#include "limits.h"
-#include <list>
 #include "Hero.h"
 #include "Monster.h"
 #include "Debug.h"
@@ -106,6 +109,25 @@ bool BoardGraph::isEdge(const NodeID& from, const NodeID& to) const
 {
 	const Node& from_node = _nodes[from._iy][from._ix];
 	return from_node.isNeighbor(to);
+}
+
+/*!
+ * @param from
+ * @param to
+ * @return True, iff from and to are diagonally-adjacent, and both fields have a common neighbour.
+ */
+bool BoardGraph::isCorner(const NodeID& from, const NodeID& to) const
+{
+    // not diagonally-adjacent?
+    if (abs(from._ix - to._ix) != 1 || abs(from._iy - to._iy) != 1)
+        return false;
+
+    // => from and to are diagonally-adjacent
+
+    // common neighbour?
+    const Node& from_node = _nodes[from._iy][from._ix];
+    const Node& to_node = _nodes[to._iy][to._ix];
+    return from_node.hasCommonNeighborWith(to_node);
 }
 
 /*!
@@ -231,7 +253,7 @@ bool BoardGraph::getNearestNeighborNode(const NodeID& target_node_id, NodeID* ne
 	const vector<NodeID>& neighbors = target_node.getNeighbors();
 	for (vector<NodeID>::const_iterator it = neighbors.begin(); it != neighbors.end(); ++it)
 	{
-        if (!playground->isFieldOccupied(*it))
+        if (!playground->isFieldOccupiedByCreature(*it))
 		{
 			*nearest_neighbor_node = *it;
 			return true;

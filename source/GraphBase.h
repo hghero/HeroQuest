@@ -69,6 +69,7 @@ public:
 	bool removeNeighborAbsolute(const NodeID& node_id);
 	bool removeNeighborRelative(int rx, int ry);
 	bool isNeighbor(const NodeID& node_id) const;
+    bool hasCommonNeighborWith(const Node& other_node) const;
 
     virtual bool save(std::ostream& stream) const;
     virtual bool load(std::istream& stream);

@@ -17,7 +17,7 @@ public:
     Trap(const NodeID& node_id);
 	virtual ~Trap();
 
-	virtual void redraw(QPainter& painter);
+    virtual void redraw(QPainter& painter, bool highlight, Qt::GlobalColor color);
 
 	bool getVisible() const;
 	void setVisible(bool visible);
@@ -51,7 +51,7 @@ public:
     PitTrap(const NodeID& node_id);
 	virtual ~PitTrap();
 
-	virtual void redraw(QPainter& painter);
+    virtual void redraw(QPainter& painter, bool highlight, Qt::GlobalColor color);
 
 	virtual bool isSpearTrap() const;
 
@@ -70,7 +70,7 @@ public:
     SpearTrap(const NodeID& node_id);
 	virtual ~SpearTrap();
 
-	virtual void redraw(QPainter& painter);
+    virtual void redraw(QPainter& painter, bool highlight, Qt::GlobalColor color);
 
 	virtual bool isSpearTrap() const;
 

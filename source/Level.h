@@ -30,6 +30,7 @@ class Level
     friend class ExecuteMonsterTurnsCommand;
     friend class OpenChestCommand;
     friend class DrawTreasureCardCommand;
+    friend class DisarmPitTrapUsingToolboxCommand;
     friend class HeroQuestLevelWindow;
 
 public:
@@ -205,6 +206,7 @@ public:
     bool attackCreatureWithSkulls(Creature* spell_caster, uint num_skulls, Creature* defender, uint num_defend_dice);
 	void roamingMonsterAttacksCurrentHero();
 	void currentHeroAttacks(const NodeID& dest_node);
+    void disarmPitTrapUsingToolbox(Hero* hero, PitTrap* pit_trap);
 
 	const LevelState& getLevelState() const;
 	LevelState* getLevelState();
@@ -230,7 +232,6 @@ public:
 	virtual const Monster* getRoamingMonsterType() const;
 
 	bool creatureIsCaughtInPitTrap(const Creature& creature) const;
-
 	QMutex& getTrapsMutex();
 
 	//void discardTreasureCard(const TreasureCard& treasure_card);
@@ -254,9 +255,10 @@ public:
 
     virtual QString getLevelBriefing() const;
 
+    void cleanupGameMaterialOnLevelFinish();
+
 protected:
 	bool prepareTreasureCards();
-	bool prepareSpellCards();
 
 	bool moveHero(Hero& hero, const NodeID& dest_node, unsigned int additional_movement_cost);
 
@@ -331,7 +333,6 @@ private:
     };
     Level::SwitchToNextCreatureResult switchToNextCreature(bool remove_current_hero_from_level);
 
-    void shuffleTreasureCardDepositionIntoStock();
     void shuffleTreasureCardStock();
     void openChest(uint room_id);
 	void drawTreasureCard();
@@ -340,6 +341,8 @@ private:
     uint getMonsterIndex(Monster* monster) const;
 	
     void debugModeSaveGames();
+
+    void putSpellCardsBackToStorage(Hero* hero);
 
 protected:
 	std::vector<Hero*> _acting_heroes;
@@ -373,10 +376,6 @@ protected:
 	std::set<uint> _non_chest_room_ids_treasures_searched;
 
 	std::map<QString, Monster*> _roaming_monster_templates;
-
-	// spell cards
-	std::vector<SpellCard> _spell_card_stock;
-	std::vector<SpellCard> _spell_card_deposition;
 };
 
 #endif

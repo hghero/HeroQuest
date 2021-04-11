@@ -27,6 +27,8 @@
 #include "SpellCardStorage.h"
 #include "DialogGameOver.h"
 #include "EventBlockingContext.h"
+#include "TreasureCardStorage.h"
+#include "HeroCamp.h"
 
 using namespace std;
 
@@ -363,9 +365,7 @@ Level::Level(uint num_heroes)
   _treasure_card_deposition(),
   _chest_pos_to_treasure_description(),
   _non_chest_room_ids_treasures_searched(),
-  _roaming_monster_templates(),
-  _spell_card_stock(),
-  _spell_card_deposition()
+  _roaming_monster_templates()
 {
     // create action states
     _level_state._hero_action_states.resize(num_heroes);
@@ -638,9 +638,6 @@ void Level::create()
 	// prepare treasure cards stock
 	prepareTreasureCards();
 
-	// prepare and assign spell cards
-	prepareSpellCards();
-
 	// place heroes onto the playground
 	placeHeroes();
 
@@ -731,100 +728,31 @@ Decoration* Level::getDecoration(uint referencing_id)
 }
 
 /*!
- * Reads the TreasureDescriptions and builds the stock of treasure cards.
+ * Builds the stock of treasure cards.
  */
 bool Level::prepareTreasureCards()
 {
-    // read the treasure card description text files => build set of TreasureDescriptions
-	set<TreasureDescription> treasure_card_descriptions;
-	if (!TreasureDescription::buildDescriptions(&treasure_card_descriptions))
-		return false;
+    if (!_treasure_card_deposition.empty())
+    {
+        ProgError(("Treasure card deposition is not empty!"));
+    }
+    if (!_treasure_card_stock.empty())
+    {
+        ProgError(("Treasure card stock is not empty!"));
+    }
 
-	if (treasure_card_descriptions.empty())
-		cout << "Warning: no treasure card descriptions loaded!" << endl;
-
-	// build vector of treasure cards, and firstly put them into the treasure card deposition
-	_treasure_card_deposition.clear();
-	for (set<TreasureDescription>::const_iterator it = treasure_card_descriptions.begin(); it != treasure_card_descriptions.end(); ++it)
+    // move all treasure cards from TreasureCardStorage to _treasure_card_stock
+    for (vector<TreasureCard>::const_iterator it = TreasureCardStorage::instance->getTreasureCards().begin();
+            it != TreasureCardStorage::instance->getTreasureCards().end(); ++it)
 	{
-		const TreasureDescription& description = *it;
-
-		for (unsigned int i = 0; i < description.getAmount(); ++i)
-		{
-			_treasure_card_deposition.push_back(TreasureCard(description));
-		}
+        _treasure_card_stock.push_back(*it);
 	}
+    TreasureCardStorage::instance->getTreasureCards().clear();
 
-	// shuffle the cards to build the stock
-	shuffleTreasureCardDepositionIntoStock();
+    // shuffle the cards in the stock
+    shuffleTreasureCardStock();
 
 	return true;
-}
-
-/*!
- * Creates the 12 spell cards and assigns them to Magician and Alb.
- */
-bool Level::prepareSpellCards()
-{
-    HG_ASSERT(_spell_card_stock.size() == 0, "_spell_card_stock is not empty at Level start");
-
-    SpellCardStorage* global_spell_card_storage = HeroQuestLevelWindow::_hero_quest->getSpellCardStorage();
-
-    // move spell cards to Level's stock
-    _spell_card_stock = global_spell_card_storage->getSpellCards();
-    global_spell_card_storage->getSpellCards().clear();
-
-    // Alb gets the pile corresponding to the family chosen
-    SpellCard::SpellFamily alb_spell_family = SpellCard::AIR; // dummy
-    Alb* alb = 0;
-    Magician* magician = 0;
-    for (uint i = 0; i < HeroQuestLevelWindow::_hero_quest->getHeroes().size(); ++i)
-    {
-        Hero* current_hero = HeroQuestLevelWindow::_hero_quest->getHeroes()[i];
-
-        Alb* alb_local = dynamic_cast<Alb*>(current_hero);
-        if (alb_local != 0)
-        {
-			alb = alb_local;
-            alb_spell_family = alb->getSpellFamily();
-        }
-
-        Magician* magician_local = dynamic_cast<Magician*>(current_hero);
-        if (magician_local != 0)
-        {
-            magician = magician_local;
-        }
-    }
-
-    if (alb != 0)
-    {
-        for (uint i = 0; i < _spell_card_stock.size(); ++i)
-        {
-            if (_spell_card_stock[i].getSpellFamily() == alb_spell_family)
-            {
-                // add spell card to Alb
-                alb->getInventory().addSpellCard(_spell_card_stock[i]);
-            }
-        }
-    }
-
-    // Magician gets the remaining piles (or all piles, if the Alb does not exist)
-    if (magician != 0)
-    {
-        for (uint i = 0; i < _spell_card_stock.size(); ++i)
-        {
-            if (alb == 0 || _spell_card_stock[i].getSpellFamily() != alb_spell_family)
-            {
-                // add spell card to Magician
-                magician->getInventory().addSpellCard(_spell_card_stock[i]);
-            }
-        }
-    }
-
-    // spell cards have been distributed => remove from stock
-    _spell_card_stock.clear();
-
-    return true;
 }
 
 /*!
@@ -850,22 +778,6 @@ void Level::shuffleTreasureCardStock()
         _treasure_card_stock.push_back(*it);
     }
     tmp_cards.clear();
-}
-
-/*!
- * Puts all cards from the treasure card deposition onto the treasure card stock and then shuffles the stock.
- */
-void Level::shuffleTreasureCardDepositionIntoStock()
-{
-    // move deposition onto stock
-    for (list<TreasureCard>::const_iterator it = _treasure_card_deposition.begin();
-            it != _treasure_card_deposition.end(); ++it)
-	{
-        _treasure_card_stock.push_back(*it);
-	}
-	_treasure_card_deposition.clear();
-
-	shuffleTreasureCardStock();
 }
 
 void Level::openChest(uint room_id)
@@ -1445,6 +1357,39 @@ void Level::endHeroTurn()
 }
 
 /*!
+ * Copies cards back to storages.
+ */
+void Level::cleanupGameMaterialOnLevelFinish()
+{
+    // --- treasure cards ---
+    for (list<TreasureCard>::iterator it = _treasure_card_stock.begin(); it != _treasure_card_stock.end(); ++it)
+    {
+        TreasureCardStorage::instance->getTreasureCards().push_back(*it);
+    }
+    _treasure_card_stock.clear();
+
+    for (list<TreasureCard>::iterator it = _treasure_card_deposition.begin(); it != _treasure_card_deposition.end();
+            ++it)
+    {
+        TreasureCardStorage::instance->getTreasureCards().push_back(*it);
+    }
+    _treasure_card_deposition.clear();
+
+    // --- spell cards ---
+    HeroCamp::instance->redistributeSpellCardsToHeroes();
+}
+
+void Level::putSpellCardsBackToStorage(Hero* hero)
+{
+    const set<SpellCard>& spell_cards = hero->getInventory().getSpellCards();
+    for (set<SpellCard>::const_iterator it_const = spell_cards.begin(); it_const != spell_cards.end(); ++it_const)
+    {
+        SpellCardStorage::instance->getSpellCardStock().push_back(*it_const);
+    }
+    hero->getInventory().removeSpellCards();
+}
+
+/*!
  * A hero is weak, if (life_points - num_attack_dice + num_defend_dice) is minimal.
  * Inserts all heroes who have the minimum weakness (among all heroes) into weakest_heroes.
  *
@@ -1471,7 +1416,8 @@ int Level::computeWeakestHeroes(const vector<Hero*>& considered_heroes, vector<H
 	for (unsigned int i = 0; i < considered_heroes.size(); ++i)
 	{
 		Hero* hero = considered_heroes[i];
-		int weakness = hero->getLifePoints() - hero->getNumDiceAttack() + hero->getNumDiceDefend();
+        int weakness = hero->getLifePoints() - hero->getNumDiceAttack() - hero->getNumDiceAttackExtra()
+                + hero->getNumDiceDefend();
 		weaknesses[hero] = weakness;
 
 		if (weakness < min_weakness)
@@ -1722,7 +1668,7 @@ void Level::handlePitTrap(
 		// are the trap and the field behind the trap free?
 		if (!dest_node_is_occupied &&
 			HeroQuestLevelWindow::_hero_quest->getPlayground()->contains(field_behind_trap) &&
-			!HeroQuestLevelWindow::_hero_quest->getPlayground()->isFieldOccupied(field_behind_trap))
+			!HeroQuestLevelWindow::_hero_quest->getPlayground()->isFieldOccupiedByCreature(field_behind_trap))
 		{
 			vector<NodeID> movement_path;
 			// problem: in einem raum sind alle nodes viewable!
@@ -1966,7 +1912,7 @@ bool Level::moveHero(Hero& hero, const NodeID& dest_node, unsigned int additiona
 	NodeID orig_hero_pos = *(HeroQuestLevelWindow::_hero_quest->getPlayground()->getCreaturePos(hero));
 
 	// save the information if dest_node is currently occupied
-	bool dest_node_is_occupied = HeroQuestLevelWindow::_hero_quest->getPlayground()->isFieldOccupied(dest_node);
+	bool dest_node_is_occupied = HeroQuestLevelWindow::_hero_quest->getPlayground()->isFieldOccupiedByCreature(dest_node);
 
 	// move current hero to dest_node
 	HeroQuestLevelWindow::_hero_quest->getPlayground()->moveCreature(&hero, dest_node);
@@ -2072,7 +2018,7 @@ void Level::moveCurrentMonster(const vector<NodeID>& movement_path)
 			++next_field_index; // update for next iteration
 
 			// if next_field is not occupied, perform a single step to that field
-			if (!HeroQuestLevelWindow::_hero_quest->getPlayground()->isFieldOccupied(target_field))
+			if (!HeroQuestLevelWindow::_hero_quest->getPlayground()->isFieldOccupiedByCreature(target_field))
 			{
 				if (!moveCurrentMonster(target_field, jump_count))
 					break;
@@ -2103,7 +2049,7 @@ void Level::moveMonsterWithoutMovePoints(Monster* monster, const vector<NodeID>&
 		++next_field_index; // update for next iteration
 
 		// if next_field is not occupied, perform a single step to that field
-		if (!_hero_quest.getPlayground().isFieldOccupied(target_field))
+		if (!_hero_quest.getPlayground().isFieldOccupiedByCreature(target_field))
 		{
 			moveMonsterWithoutMovePoints(monster, target_field);
 		}
@@ -2305,6 +2251,13 @@ void Level::currentHeroAttacks(const NodeID& dest_node)
 	creatureAttacksCreature(attacker, defender);
 }
 
+void Level::disarmPitTrapUsingToolbox(Hero* hero, PitTrap* pit_trap)
+{
+    DVX(("Level::disarmPitTrapUsingToolbox: hero = %s", qPrintable(hero->getName())));
+    DisarmPitTrapUsingToolboxCommand cmd(*hero, *pit_trap);
+    HeroQuestLevelWindow::_hero_quest->execute(cmd);
+}
+
 /*!
  * \returns True if creature is currently caught in a pit trap.
  */
@@ -2327,7 +2280,7 @@ void Level::removeTrap(Trap* trap)
 	{
 		if (*it == trap)
 		{
-			AutoMutex am(_traps_mutex);
+            AutoMutex am(HeroQuestLevelWindow::_hero_quest->getLevel()->getTrapsMutex());
 
 			_traps.erase(it);
 			delete trap;
@@ -2560,22 +2513,6 @@ bool Level::save(ostream& stream) const
         StreamUtils::writeUInt(stream, *it);
     }
 
-    uint spell_card_stock_size = _spell_card_stock.size();
-    StreamUtils::writeUInt(stream, spell_card_stock_size);
-    HG_ASSERT(_spell_card_stock.empty(), "_spell_card_stock is not empty");
-    for (vector<SpellCard>::const_iterator it = _spell_card_stock.begin(); it != _spell_card_stock.end(); ++it)
-    {
-        it->save(stream);
-    }
-    HG_ASSERT((_spell_card_stock.size() == spell_card_stock_size),
-            "spell card stock sizes before and after don't match");
-
-    StreamUtils::writeUInt(stream, _spell_card_deposition.size());
-    for (vector<SpellCard>::const_iterator it = _spell_card_deposition.begin(); it != _spell_card_deposition.end(); ++it)
-    {
-        it->save(stream);
-    }
-
     return !stream.fail();
 }
 
@@ -2742,27 +2679,6 @@ bool Level::load(istream& stream)
     }
 
     // _roaming_monster_templates: already created in Level constructor
-
-    // spell cards
-    _spell_card_stock.clear();
-    uint num_spell_cards_stock;
-    StreamUtils::readUInt(stream, &num_spell_cards_stock);
-    for (uint i = 0; i < num_spell_cards_stock; ++i)
-    {
-        SpellCard spell_card;
-        spell_card.load(stream);
-        _spell_card_stock.push_back(spell_card);
-    }
-
-    _spell_card_deposition.clear();
-    uint num_spell_cards_deposition;
-    StreamUtils::readUInt(stream, &num_spell_cards_deposition);
-    for (uint i = 0; i < num_spell_cards_deposition; ++i)
-    {
-        SpellCard spell_card;
-        spell_card.load(stream);
-        _spell_card_deposition.push_back(spell_card);
-    }
 
     return !stream.fail();
 }

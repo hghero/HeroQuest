@@ -12,6 +12,7 @@
 #include "Debug.h"
 #include "Level.h"
 #include "NonWalkableDecoration.h"
+#include "Trap.h"
 
 using namespace std;
 
@@ -91,7 +92,7 @@ void MoveHeroMovementPathCommand::run()
             const NodeID& target_field = _movement_path[next_field_index];
             ++next_field_index; // update for next iteration
 
-            if (!HeroQuestLevelWindow::_hero_quest->getPlayground()->isFieldOccupied(target_field))
+            if (!HeroQuestLevelWindow::_hero_quest->getPlayground()->isFieldOccupiedByCreature(target_field))
             {
                 // target_field not occupied => move to that field
                 if (!HeroQuestLevelWindow::_hero_quest->getLevel()->moveHero(_hero, target_field, additional_movement_cost))
@@ -252,12 +253,24 @@ void CreatureAttacksCreatureCommand::run()
     HeroQuestLevelWindow::_debug_create_attacks_creature_command_running = true;
     DVX(("CreatureAttacksCreatureCommand::run BEGIN"));
 
-    // throw the attack dice
-    std::vector<DiceRollPane::AttackDiceResult> attack_dice_results;
-    HeroQuestLevelWindow::_hero_quest->throwAttackDice(_attacker, &attack_dice_results);
+    // --- determine the number of dice to throw for this attack ---
+    Hero* attacker_hero = dynamic_cast<Hero*>(&_attacker);
+    uint num_dice_attack =
+            attacker_hero != 0 ?
+                    attacker_hero->getHighestNumDiceAttack(&_defender) :
+                    _attacker.getNumDiceAttack();
 
-    unsigned int num_skulls = 0;
-    for (unsigned int i = 0; i < attack_dice_results.size(); ++i)
+    // if a hero attacker sits in a pit trap, he attacks with 1 dice less
+    if (_attacker.isHero() && HeroQuestLevelWindow::_hero_quest->getLevel()->creatureIsCaughtInPitTrap(_attacker)
+            && num_dice_attack > 0)
+        num_dice_attack -= 1;
+
+    // --- throw the attack dice ---
+    std::vector<DiceRollPane::AttackDiceResult> attack_dice_results;
+    HeroQuestLevelWindow::_hero_quest->throwAttackDice(_attacker, num_dice_attack, &attack_dice_results);
+
+    uint num_skulls = 0;
+    for (uint i = 0; i < attack_dice_results.size(); ++i)
     {
         if (attack_dice_results[i] == DiceRollPane::ATTACK_DICE_RESULT_SKULL)
             ++num_skulls;
@@ -328,6 +341,10 @@ void CreatureAttacksCreatureCommand::run()
         DV(("CreatureAttacksCreatureCommand::run: compute reachable area"));
         HeroQuestLevelWindow::_hero_quest->getPlayground()->getQuestBoard()->computeReachableArea();
     }
+
+    // Hero: reset extra attack dice
+    if (attacker_hero != 0)
+        attacker_hero->setNumDiceAttackExtra(0);
 
     DV(("CreatureAttacksCreatureCommand::run: update playground"));
     HeroQuestLevelWindow::_hero_quest->getPlayground()->update();
@@ -454,6 +471,67 @@ void AttackCreatureWithSkullsCommand::run()
     HeroQuestLevelWindow::_hero_quest->getPlayground()->update();
 
     DVX(("AttackCreatureWithSkullsCommand::run END"));
+}
+
+// =================================================================
+
+const QString DisarmPitTrapUsingToolboxCommand::NAME = "DisarmPitTrapUsingToolboxCommand";
+
+DisarmPitTrapUsingToolboxCommand::DisarmPitTrapUsingToolboxCommand(Hero& hero, PitTrap& pit_trap)
+        :
+        Command(), _hero(hero), _pit_trap(pit_trap)
+{
+}
+
+DisarmPitTrapUsingToolboxCommand::~DisarmPitTrapUsingToolboxCommand()
+{
+}
+
+void DisarmPitTrapUsingToolboxCommand::run()
+{
+    // roll a movement die
+    vector<uint> dice_results;
+    HeroQuestLevelWindow::_hero_quest->getDiceRollPane()->throwMovementDice(_hero, 1, &dice_results);
+
+    HeroQuestLevelWindow::_hero_quest->delay(Level::ATTACK_DELAY);
+
+    if (dice_results[0] == 1)
+    {
+        // 1 => lose 1 life point
+        int current_life_points = _hero.getLifePoints();
+        current_life_points -= 1;
+
+        _hero.setLifePoints(current_life_points);
+
+        // if the creature has died, remove it from the playground
+        if (current_life_points == 0)
+        {
+            if (HeroQuestLevelWindow::_hero_quest->getLevel()->removeCreature(&_hero))
+                HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::SOUND_HERO_DIES);
+            else
+            {
+                // hero survives due to life potion or sth. similar
+                HeroQuestLevelWindow::_hero_quest->playSoundOnce(
+                        SoundManager::SOUND_ATTACK_HERO_SMALL_DECREASE_LIFE_POINTS);
+            }
+        }
+        else
+        {
+            // _hero loses a life point, but does not die
+            HeroQuestLevelWindow::_hero_quest->playSoundOnce(
+                    SoundManager::SOUND_ATTACK_HERO_SMALL_DECREASE_LIFE_POINTS);
+        }
+    }
+    else
+    {
+        // _hero disarms the pit trap without losing a life point
+        HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::SOUND_DISARM_PIT_TRAP);
+    }
+
+    // either way, the pit trap is now disarmed
+    HeroQuestLevelWindow::_hero_quest->getLevel()->removeTrap(&_pit_trap);
+
+    HeroQuestLevelWindow::_hero_quest->getPlayground()->update();
 }
 
 // =================================================================

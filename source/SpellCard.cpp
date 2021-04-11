@@ -8,6 +8,7 @@
 #include "Level.h"
 #include "SoundManager.h"
 #include "QuestBoard.h"
+#include "SpellCardStorage.h"
 #include "Debug.h"
 
 using namespace std;
@@ -217,12 +218,12 @@ QString SpellCard::getDescription() const
 
 QPixmap* SpellCard::getBackImage() const
 {
-    return HeroQuestLevelWindow::_hero_quest->getPlayground()->getSpellCardBackImage(getSpellFamily());
+    return SpellCardStorage::instance->getSpellCardBackImage(getSpellFamily());
 }
 
 QPixmap* SpellCard::getImage() const
 {
-    return HeroQuestLevelWindow::_hero_quest->getPlayground()->getSpellCardImage(getSpellID());
+    return SpellCardStorage::instance->getSpellCardImage(getSpellID());
 }
 
 bool SpellCard::save(std::ostream& stream) const
@@ -437,7 +438,7 @@ bool SpellCard::execute() const
             DVX(("chosen hero for BRAVENESS: %s", qPrintable(hero->getName())));
 
             spell_card_used = true;
-            hero->setNumDiceAttackExtra(2);
+            hero->setNumDiceAttackExtra(hero->getNumDiceAttackExtra() + 2);
 
             HeroQuestLevelWindow::_hero_quest->updateHeroStatisticPane(hero);
 

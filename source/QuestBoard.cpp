@@ -16,6 +16,7 @@
 #include "Debug.h"
 #include "Level.h"
 #include "PainterContext.h"
+#include "ParameterStorage.h"
 
 using namespace std;
 
@@ -61,7 +62,8 @@ bool QuestBoard::create()
     Playground* playground = HeroQuestLevelWindow::_hero_quest->getPlayground();
 
     // save scaled version
-    //_scaled_board_image = _orig_board_image->scaled(1600, 950, Qt::KeepAspectRatio); // 1193 x 950 HIER WEITER; muss dann auch an Breite ausgerichtet werden!
+    DV(
+            ("scaling board image from %d x %d to %d x %d", _orig_board_image->width(), _orig_board_image->height(), playground->width(), playground->height()));
     _scaled_board_image = _orig_board_image->scaled(playground->width(), playground->height()/*, Qt::KeepAspectRatio*/);
 
 	// save positions of fields (positions have been extracted manually)
@@ -114,8 +116,8 @@ bool QuestBoard::create()
 		}
 	}
 
-	_orig_field_width = min(left_part_orig_field_width, right_part_orig_field_width);
-	_orig_field_height = orig_field_height;
+    _orig_field_width = min(left_part_orig_field_width, right_part_orig_field_width);
+    _orig_field_height = orig_field_height;
 
 	// create graph of the standard board
 	_board_graph = new QuestBoardGraph(this);
@@ -207,13 +209,16 @@ void QuestBoard::redraw(QPainter& painter)
     {
         PainterContext painter_context(painter);
         painter.setBrush(QBrush(QColor(0, 255, 0, 50), Qt::SolidPattern));
+        painter.setPen(Qt::NoPen);
 
         for (set<NodeID>::const_iterator it_reachable_nodes = _reachable_area.begin();
                 it_reachable_nodes != _reachable_area.end(); ++it_reachable_nodes)
         {
             const NodeID& reachable_node = *it_reachable_nodes;
             Vec2i corner0 = getFieldCorner0(reachable_node);
-            painter.drawRect(corner0.x, corner0.y, getFieldWidth(), getFieldHeight());
+            Vec2i corner1 = getFieldCorner1(reachable_node);
+            Vec2i corner2 = getFieldCorner2(reachable_node);
+            painter.drawRect(corner0.x, corner0.y, corner1.x - corner0.x, corner2.y - corner0.y);
         }
     }
 }
@@ -307,12 +312,6 @@ Vec2i QuestBoard::getFieldCorner2(const NodeID& node_id) const
 Vec2i QuestBoard::getFieldCorner3(const NodeID& node_id) const
 {
 	return getFieldCorner0(NodeID(node_id._ix + 1, node_id._iy + 1));
-}
-
-int QuestBoard::getFieldWidth() const
-{
-	float orig_to_screen_factor = _scaled_board_image.width() / float(_orig_board_image->width());
-	return int(round(_orig_field_width * orig_to_screen_factor));
 }
 
 Vec2i QuestBoard::getFieldCorner(const NodeID& node_id, unsigned int corner_num) const
@@ -551,6 +550,11 @@ bool QuestBoard::fieldCanBeViewedFromField(const NodeID& field1, const NodeID& f
 	}
 
 	return true;
+}
+
+bool QuestBoard::nodesAreInSameRowOrColumn(const NodeID& field1, const NodeID& field2) const
+{
+    return field1._ix == field2._ix || field1._iy == field2._iy;
 }
 
 /*!
@@ -843,12 +847,6 @@ bool QuestBoard::getTransitionByNearestNeighbours(const Vec2i& screen_coords, pa
 	return true;
 }
 
-int QuestBoard::getFieldHeight() const
-{
-	float orig_to_screen_factor = _scaled_board_image.width() / float(_orig_board_image->width());
-	return int(round(_orig_field_height * orig_to_screen_factor));
-}
-
 /*!
  * Computes the shortest path from the currentHero's position to the field node_id,
  * and saves it in _movement_path.
@@ -953,7 +951,6 @@ void QuestBoard::setAttackDestination(int x, int y)
 
     Playground* playground = HeroQuestLevelWindow::_hero_quest->getPlayground();
 
-	// is node_id a neighbor of the current hero's position?
 	Hero* current_hero = HeroQuestLevelWindow::_hero_quest->getLevel()->getCurrentlyActingHero();
 	if (current_hero == 0)
 	    return;
@@ -965,7 +962,20 @@ void QuestBoard::setAttackDestination(int x, int y)
 		return;
 	}
 	if (!_board_graph->isEdge(node_id, *pos_current_hero))
-		return;
+    {
+        // check for diagonally-adjacent attack
+        if (!_board_graph->isCorner(node_id, *pos_current_hero))
+            return;
+
+        // fields are diagonally-adjacent; may the hero attack this way?
+        if (current_hero->getNumAttackDiceDiagonallyAdjacent() == 0)
+        {
+            // no, he may not
+            return;
+        }
+
+        // yes, he may
+    }
 
 	// is there another creature at node_id?
     Creature* destination_creature = playground->getCreature(node_id);
@@ -1195,7 +1205,7 @@ void QuestBoard::removeOccupiedFieldsFromEnd(vector<NodeID>* path) const
 
     Playground* playground = HeroQuestLevelWindow::_hero_quest->getPlayground();
 
-    while (playground->isFieldOccupied(path->back()))
+    while (playground->isFieldOccupiedByCreature(path->back()))
 	{
 		//cout << "removing field " << path->back() << " from path..." << endl;
 		path->pop_back();
@@ -1367,7 +1377,6 @@ void QuestBoard::handleMouseEventInActionModeMoveOrAttackOrOpenDoor(QMouseEvent*
     }
 }
 
-// TODO: right button selects 1 field, left button selects 2 fields
 void QuestBoard::handleMouseEventInActionModeSelectFieldOrDoor(QMouseEvent* event)
 {
     // RMB pressed / clicked / held down: select field
@@ -1404,6 +1413,53 @@ void QuestBoard::handleMouseEventInActionModeSelectFieldOrDoor(QMouseEvent* even
     }
 }
 
+void QuestBoard::handleMouseEventInActionModeSelectFieldInVisualLineOfSight(QMouseEvent* event,
+        const Hero* related_hero)
+{
+    const NodeID* related_hero_node_id = HeroQuestLevelWindow::_hero_quest->getPlayground()->getCreaturePos(
+            *related_hero);
+    
+    // RMB pressed / clicked / held down: select field
+    if (((event->buttons() & Qt::RightButton) != Qt::NoButton) || (event->button() == Qt::RightButton))
+    {
+        // get the field which was clicked; check validity
+        NodeID clicked_field(0, 0);
+        bool valid_field = getNodeID(Vec2i(event->pos().x(), event->pos().y()), &clicked_field);
+        if (!valid_field || // valid field?
+                !nodesAreInSameRowOrColumn(clicked_field, *related_hero_node_id) || // same row or column?
+                !fieldCanBeViewedFromField(clicked_field, *related_hero_node_id, false /*respect_field2_borders*/)) // field can be viewed?
+        {
+            HeroQuestLevelWindow::_hero_quest->setUserSelectedNodeID(NodeID(-1, -1));
+            return;
+        }
+        
+        HeroQuestLevelWindow::_hero_quest->setUserSelectedNodeID(clicked_field);
+    }
+}
+
+void QuestBoard::handleMouseEventInActionModeSelectAdjacentField(QMouseEvent* event, const Hero* related_hero)
+{
+    const NodeID* related_hero_node_id = HeroQuestLevelWindow::_hero_quest->getPlayground()->getCreaturePos(
+            *related_hero);
+    const Node& related_hero_node = _board_graph->getNode(*related_hero_node_id);
+
+    // LMB pressed / clicked / held down: select field
+    if (((event->buttons() & Qt::LeftButton) != Qt::NoButton) || (event->button() == Qt::LeftButton))
+    {
+        // get the field which was clicked; check validity
+        NodeID clicked_field(0, 0);
+        bool valid_field = getNodeID(Vec2i(event->pos().x(), event->pos().y()), &clicked_field);
+        if (!valid_field || // valid field?
+                !related_hero_node.isNeighbor(clicked_field)) // neighbors?
+        {
+            HeroQuestLevelWindow::_hero_quest->setUserSelectedNodeID(NodeID(-1, -1));
+            return;
+        }
+
+        HeroQuestLevelWindow::_hero_quest->setUserSelectedNodeID(clicked_field);
+    }
+}
+
 void QuestBoard::mouseEvent(QMouseEvent* event)
 {
     Playground* playground = HeroQuestLevelWindow::_hero_quest->getPlayground();
@@ -1419,6 +1475,18 @@ void QuestBoard::mouseEvent(QMouseEvent* event)
         case Playground::ACTION_MODE_SELECT_FIELD_OR_DOOR:
         {
             handleMouseEventInActionModeSelectFieldOrDoor(event);
+        }
+            break;
+
+        case Playground::ACTION_MODE_SELECT_FIELD_IN_VISUAL_LINE_OF_SIGHT:
+        {
+            handleMouseEventInActionModeSelectFieldInVisualLineOfSight(event, playground->getActionModeRelatedHero());
+        }
+            break;
+
+        case Playground::ACTION_MODE_SELECT_ADJACENT_FIELD:
+        {
+            handleMouseEventInActionModeSelectAdjacentField(event, playground->getActionModeRelatedHero());
         }
             break;
 

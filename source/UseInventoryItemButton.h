@@ -5,24 +5,28 @@
 
 class QString;
 class InventoryItem;
-class DialogInventory;
+class QDialog;
+class Inventory;
 
 class UseInventoryItemButton : public QPushButton
 {
     Q_OBJECT
 
 public:
-    UseInventoryItemButton(DialogInventory* dialog_inventory, QWidget* parent, const InventoryItem& inventory_item, const QString& text);
+    UseInventoryItemButton(QDialog* dialog_inventory, QWidget* parent, const InventoryItem& inventory_item,
+            Inventory* inventory, const QString& text);
 	virtual ~UseInventoryItemButton();
 
 	const InventoryItem& getInventoryItem() const;
 
 public slots:
-	void use() const;
+    void use() const; //! use a spell or equipment card
+    void discard(); //! discard an equipment card
 
 private:
-	DialogInventory* _dialog_inventory;
-	const InventoryItem& _inventory_item;
+    QDialog* _parent_dialog;
+    const InventoryItem& _inventory_item; //! the item which can be used (spell, equipemnt) or discarded (equipment)
+    Inventory* _inventory; //! the inventory from which the equipment will be discarded
 };
 
 #endif

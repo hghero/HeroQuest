@@ -104,6 +104,9 @@ bool SoundManager::loadSoundsFromFiles()
     if (!loadSoundFromFile(CAST_SPELL, ":/sounds/cast_spell.wav"))
         return false;
 
+    if (!loadSoundFromFile(SOUND_DISARM_PIT_TRAP, ":/sounds/disarm_pit_trap.wav"))
+        return false;
+
 	return true;
 }
 

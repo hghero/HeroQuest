@@ -23,6 +23,11 @@ bool InventoryItem::isSpellCard() const
     return false;
 }
 
+bool InventoryItem::isEquipmentCard() const
+{
+    return false;
+}
+
 bool InventoryItem::save(std::ostream& stream) const
 {
     return true;

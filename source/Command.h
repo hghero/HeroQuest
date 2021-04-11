@@ -10,6 +10,7 @@
 
 class Hero;
 class Creature;
+class PitTrap;
 
 // =================================================================
 
@@ -103,6 +104,7 @@ class GenieAttacksCreatureCommand : public CreatureAttacksCreatureCommand
 
 /*!
  * Attacks a creature with a fixed number of skulls.
+ * This does not use nor affect any Creature's extra attack dice.
  */
 class AttackCreatureWithSkullsCommand : public CreatureAttacksCreatureCommand
 {
@@ -121,6 +123,27 @@ class AttackCreatureWithSkullsCommand : public CreatureAttacksCreatureCommand
 
     bool _use_num_defend_dice;
     uint _num_defend_dice;
+};
+
+// =================================================================
+
+/*!
+ * A hero disarms a pit trap using his toolbox equipment.
+ * For disarming it, the hero rolls a movement die. If he rolls a 1, he loses 1 life point.
+ */
+class DisarmPitTrapUsingToolboxCommand : public Command
+{
+    public:
+    DisarmPitTrapUsingToolboxCommand(Hero& hero, PitTrap& pit_trap);
+    virtual ~DisarmPitTrapUsingToolboxCommand();
+
+    virtual void run();
+
+    static const QString NAME;
+
+    private:
+    Hero& _hero;
+    PitTrap& _pit_trap;
 };
 
 // =================================================================

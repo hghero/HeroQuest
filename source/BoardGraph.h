@@ -26,6 +26,7 @@ public:
 
 	bool isEdge(const Node& from, const Node& to) const;
 	bool isEdge(const NodeID& from, const NodeID& to) const;
+    bool isCorner(const NodeID& from, const NodeID& to) const;
 
     void getShortestPath(const NodeID& from, const NodeID& to, bool pass_heros, bool pass_monsters, bool through_walls,
             unsigned int max_path_length, std::vector<NodeID>* path) const;

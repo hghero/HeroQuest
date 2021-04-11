@@ -8,6 +8,10 @@
 #include "HeroQuestLevelWindow.h"
 #include "QuestBoard.h"
 #include "TreasureDescription.h"
+#include "TreasureCardStorage.h"
+#include "Playground.h"
+#include "ParameterStorage.h"
+
 
 using namespace std;
 
@@ -31,12 +35,10 @@ TreasureDescriptionPane::TreasureDescriptionPane(QWidget* parent, const Treasure
     setLayout(_outer_layout);
 
     // chest_3d_image
-    QPixmap* chest_3d_image = HeroQuestLevelWindow::_hero_quest->getPlayground()->getChest3DImage();
+    QPixmap* chest_3d_image = TreasureCardStorage::instance->getChest3DImage();
     if (chest_3d_image == 0)
         return;
-    int chest_3d_image_scaled_width =
-            HeroQuestLevelWindow::_hero_quest->getPlayground()->getQuestBoard()->getFieldWidth()
-                    * CHEST_IMAGE_WIDTH_FIELD_SIZE_FACTOR;
+    int chest_3d_image_scaled_width = ParameterStorage::instance->getFieldSize() * CHEST_IMAGE_WIDTH_FIELD_SIZE_FACTOR;
     QLabel* chest_3d_image_label = new QLabel();
     chest_3d_image_label->setPixmap(chest_3d_image->scaledToWidth(chest_3d_image_scaled_width));
     chest_3d_image_label->setAlignment(Qt::AlignTop);

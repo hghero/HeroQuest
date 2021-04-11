@@ -6,7 +6,6 @@
 
 #include "TreasureCard.h"
 
-class HeroQuestLevelWindow;
 
 class TreasureCardPane : public QLabel
 {

@@ -114,6 +114,11 @@ int Creature::getNumDiceAttack() const
 	return _num_dice_attack;
 }
 
+int Creature::getHighestNumDiceRegularAttack() const
+{
+    return getNumDiceAttack();
+}
+
 void Creature::setNumDiceAttack(int num_dice_attack)
 {
 	_num_dice_attack = num_dice_attack;
@@ -122,6 +127,11 @@ void Creature::setNumDiceAttack(int num_dice_attack)
 int Creature::getNumDiceDefend() const
 {
 	return _num_dice_defend;
+}
+
+int Creature::getHighestNumDiceDefend() const
+{
+    return getNumDiceDefend();
 }
 
 void Creature::setNumDiceDefend(int num_dice_defend)

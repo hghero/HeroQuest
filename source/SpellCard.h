@@ -9,7 +9,7 @@
 #include "InventoryItem.h"
 
 /*!
- * An item storable in a hero's inventory.
+ * Spells: Fire, Earth, Water, Air.
  */
 class SpellCard : public InventoryItem
 {
@@ -47,7 +47,9 @@ public:
     AIR = 0,
     WATER,
     EARTH,
-    FIRE
+    FIRE,
+
+        SPELL_FAMILY_UNKNOWN
     };
 
     SpellCard();

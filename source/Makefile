@@ -17,9 +17,15 @@ MOC_HEADER = HeroQuestStartDialog.h \
              TreasureCardPane.h \
              SpellCardPane.h \
              UseInventoryItemButton.h \
+             BuyItemButton.h \
              DialogGameOver.h \
+             DialogLevelFinished.h \
              TreasureDescriptionPane.h \
-             DialogLevelBriefing.h
+             DialogLevelBriefing.h \
+             DialogBuyEquipment.h \
+             InventoryPane.h \
+             EquipmentCardPane.h \
+             EquipmentMarketPlacePane.h
              
 # ===============================================================
 

@@ -2,12 +2,16 @@
 
 #include <vector>
 
+#include <QtCore/QString.h>
+
 #include "QuestBoard.h"
 #include "Debug.h"
 #include "Level.h"
 #include "NonWalkableDecoration.h"
 #include "WalkableDecoration.h"
 #include "StreamUtils.h"
+#include "Playground.h"
+#include "ParameterStorage.h"
 
 
 using namespace std;
@@ -83,19 +87,28 @@ void Decoration::redraw(QPainter& painter)
     QuestBoard* quest_board = HeroQuestLevelWindow::_hero_quest->getPlayground()->getQuestBoard();
 
 	// original image size
+    DV(("================= %s ==============", qPrintable(getName(this))));
 	Vec2i image_orig_size(image->width(), image->height());
 	Vec2f image_orig_center(image_orig_size.x / float(2), image_orig_size.y / float(2));
+    DV(("image_orig_size: %d x %d", image_orig_size.x, image_orig_size.y));
+    DV(("image_orig_center: %f x %f", image_orig_center.x, image_orig_center.y));
+
+    // on the board, the Decoration shall cover as much as possible of the rectangle defined by used_board_fields_size
+    Vec2f used_board_fields_size(
+            quest_board->getFieldCorner3(_node_bottom_right).x - quest_board->getFieldCorner0(_node_top_left).x + 1,
+            quest_board->getFieldCorner3(_node_bottom_right).y - quest_board->getFieldCorner0(_node_top_left).y + 1);
+    DV(("used_board_fields_size: %f x %f", used_board_fields_size.x, used_board_fields_size.y));
 
 	int num_fields_x = _node_bottom_right._ix - _node_top_left._ix + 1;
 	int num_fields_y = _node_bottom_right._iy - _node_top_left._iy + 1;
-    const int FIELD_MARGIN = int(quest_board->getFieldWidth() / float(11) + 0.5);
-	Vec2i image_max_size(
-		quest_board->getFieldWidth() * num_fields_x - 2 * FIELD_MARGIN,
-            quest_board->getFieldHeight() * num_fields_y - 2 * FIELD_MARGIN);
-
-	Vec2f used_board_fields_size(
-            quest_board->getFieldCorner3(_node_bottom_right).x - quest_board->getFieldCorner0(_node_top_left).x + 1,
-            quest_board->getFieldCorner3(_node_bottom_right).y - quest_board->getFieldCorner0(_node_top_left).y + 1);
+    // leave some pixels free at the 4 sides of the Decoration
+    const int FIELD_MARGIN = int(ParameterStorage::instance->getFieldSize() / float(11) + 0.5);
+    DV(("FIELD_MARGIN: %d", FIELD_MARGIN));
+    DV(("field size: %d", ParameterStorage::instance->getFieldSize()));
+    // shrink used_board_fields_size a bit to have some free space at the sides
+    Vec2i image_max_size(int(used_board_fields_size.x + 0.5) - 2 * FIELD_MARGIN,
+            int(used_board_fields_size.y + 0.5) - 2 * FIELD_MARGIN);
+    DV(("image_max_size: %d x %d", image_max_size.x, image_max_size.y));
 	Vec2f image_transformed_size(image_orig_size);
 
 #ifdef DEBUG_TRAFO
@@ -148,11 +161,13 @@ void Decoration::redraw(QPainter& painter)
 		image_transformed_size *= scale;
 		image_transformed_size = Vec2f(image_transformed_size.y, image_transformed_size.x);
 	}
+    DV(("image_transformed_size: %f x %f", image_transformed_size.x, image_transformed_size.y));
 
 	// determine top left pixel of transformed image, respecting the centering relatively to the used_board_fields_size
     Vec2f image_pos_top_left = Vec2f(quest_board->getFieldCorner0(_node_top_left))
             + used_board_fields_size * 0.5
             - image_transformed_size * 0.5;
+    DV(("image_pos_top_left: %f x %f", image_pos_top_left.x, image_pos_top_left.y));
 
 	painter.save();
 

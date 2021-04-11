@@ -11,6 +11,7 @@
 #include <QtWidgets/QPushButton>
 
 #include "Debug.h"
+#include "ParameterStorage.h"
 
 using namespace std;
 
@@ -21,14 +22,8 @@ HeroQuestStartDialog::HeroQuestStartDialog(DialogReturnValue* dialog_return_valu
     _button_ids(),
     _buttons()
 {
-    int screen_width = 1920;
-    int screen_height = 1080;
-    if (!QGuiApplication::screens().empty())
-    {
-        QScreen* first_screen = *(QGuiApplication::screens().begin());
-        screen_width = first_screen->availableGeometry().width();
-        screen_height = first_screen->availableGeometry().height();
-    }
+    int screen_width = ParameterStorage::instance->getScreenWidth();
+    int screen_height = ParameterStorage::instance->getScreenHeight();
 
     // size of window: width 50 %, height 50 %
     QSize dialog_size(screen_width / 2, screen_height / 2);

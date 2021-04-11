@@ -30,9 +30,11 @@ public:
 	QPixmap* getAvatar();
 
 	virtual int getNumDiceAttack() const;
+    virtual int getHighestNumDiceRegularAttack() const;
 	void setNumDiceAttack(int num_dice_attack);
 
 	virtual int getNumDiceDefend() const;
+    virtual int getHighestNumDiceDefend() const;
 	void setNumDiceDefend(int num_dice_defend);
 
 	int getLifePoints() const;

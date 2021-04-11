@@ -9,7 +9,9 @@
 #include "Debug.h"
 #include "HeroQuestLevelWindow.h"
 #include "Level.h"
+#include "ParameterStorage.h"
 #include "StreamUtils.h"
+#include "PainterContext.h"
 
 using namespace std;
 
@@ -39,7 +41,7 @@ Trap::~Trap()
 	// NIX
 }
 
-void Trap::redraw(QPainter& /*painter*/)
+void Trap::redraw(QPainter& /*painter*/, bool /*highlight*/, Qt::GlobalColor /*color*/)
 {
     DVX(("Internal program error: function \"Trap::redraw()\" called!"));
 }
@@ -119,7 +121,8 @@ PitTrap::~PitTrap()
 	// NIX
 }
 
-void PitTrap::redraw(QPainter& painter)
+// TODO: centralize such drawings of highlighted pixmaps and re-use code
+void PitTrap::redraw(QPainter& painter, bool highlight, Qt::GlobalColor highlight_color)
 {
 	if (!_visible)
 		return;
@@ -130,43 +133,34 @@ void PitTrap::redraw(QPainter& painter)
     if (image == 0)
         return;
 
-	// --- We assume a square image! ---
+    PainterContext painter_context(painter);
 
-	// original image size
-	int pit_trap_orig_size = image->width();
+    const int FIELD_MARGIN = int(ParameterStorage::instance->getFieldSize() / float(11) + 0.5);
 
-    const int FIELD_MARGIN = int(quest_board->getFieldWidth() / float(11) + 0.5);
-	// destination image size = min(field_width, field_height) - MARGIN
-    int pit_trap_size = min(quest_board->getFieldWidth(), quest_board->getFieldHeight()) - FIELD_MARGIN;
+    // original image size
+    int pit_trap_orig_width = image->width();
+    int pit_trap_orig_height = image->height();
 
-    Vec2i pit_trap_corner0 = quest_board->getFieldCorner0(_node_id) + Vec2i(FIELD_MARGIN / 2, FIELD_MARGIN / 2);
+    // image size in pixels
+    Vec2i pit_trap_corner0 = quest_board->getFieldCorner0(_node_id);
+    Vec2i pit_trap_corner3 = quest_board->getFieldCorner3(_node_id);
+    int width = pit_trap_corner3.x - pit_trap_corner0.x - FIELD_MARGIN;
+    int height = pit_trap_corner3.y - pit_trap_corner0.y - FIELD_MARGIN;
 
-	float scale = pit_trap_size / float(pit_trap_orig_size);
+    Vec2i pos_center = (pit_trap_corner3 + pit_trap_corner0) / 2;
 
-	painter.save();
+    painter.drawPixmap(pos_center.x - int(round(width / float(2))), pos_center.y - int(round(height / float(2))), width,
+            height, *image);
 
-	// 1. scale
-	QTransform trafo_01_scale;
-	trafo_01_scale.scale(scale, scale);
-	// 2. translate to draw position
-	QTransform trafo_02_translate_to_draw_position;
-	trafo_02_translate_to_draw_position.translate(pit_trap_corner0.x, pit_trap_corner0.y);
+    if (highlight)
+    {
+        QPen pen(highlight_color);
+        pen.setWidth(3);
+        painter.setPen(pen);
 
-    QTransform accumulated_transform =
-            trafo_01_scale *
-            trafo_02_translate_to_draw_position;
-
-	painter.setTransform(accumulated_transform);
-
-#ifdef DEBUG_TRAFO
-	cout << "transform: " << accumulated_transform.m11() << " " << accumulated_transform.m12() << " " << accumulated_transform.m13() << endl;
-	cout << "           " << accumulated_transform.m21() << " " << accumulated_transform.m22() << " " << accumulated_transform.m23() << endl;
-	cout << "           " << accumulated_transform.m31() << " " << accumulated_transform.m32() << " " << accumulated_transform.m33() << endl;
-#endif
-
-	painter.drawPixmap(0, 0, *image);
-
-	painter.restore();
+        painter.drawRect(pos_center.x - int(round(width / float(2))), pos_center.y - int(round(height / float(2))),
+                width, height);
+    }
 }
 
 bool PitTrap::isSpearTrap() const
@@ -211,7 +205,7 @@ SpearTrap::~SpearTrap()
 	// NIX
 }
 
-void SpearTrap::redraw(QPainter& painter)
+void SpearTrap::redraw(QPainter& painter, bool /*highlight*/, Qt::GlobalColor /*color*/)
 {
 	if (!_visible)
 		return;
@@ -238,9 +232,10 @@ void SpearTrap::redraw(QPainter& painter)
 	// original image size
 	int spear_trap_orig_size = image->width();
 
-    const int FIELD_MARGIN = int(quest_board->getFieldWidth() / float(11) + 0.5);
+    const int FIELD_MARGIN = int(ParameterStorage::instance->getFieldSize() / float(11) + 0.5);
 	// destination image size = min(field_width, field_height) - MARGIN
-    int spear_trap_size = min(quest_board->getFieldWidth(), quest_board->getFieldHeight()) - FIELD_MARGIN;
+    int spear_trap_size = min(ParameterStorage::instance->getFieldSize(), ParameterStorage::instance->getFieldSize())
+            - FIELD_MARGIN;
 
     Vec2i spear_trap_corner0(quest_board->getFieldCorner0(_node_id));
 

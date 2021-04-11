@@ -13,7 +13,9 @@
 #include <QtWidgets/QComboBox>
 #include <QtGui/QPainter>
 
+#include "Hero.h"
 #include "Debug.h"
+#include "ParameterStorage.h"
 
 using namespace std;
 
@@ -195,51 +197,54 @@ HeroQuestNewGameDialog::~HeroQuestNewGameDialog()
 }
 
 /*!
- * The avatars are directly scaled to HeroQuestLevelWindow::FIELD_SIZE.
+ * The avatars are directly scaled to ParameterStorage::_field_size.
  */
 void HeroQuestNewGameDialog::loadAvatars()
 {
-    Barbarian tmp_barbarian(false);
+    Barbarian tmp_barbarian;
     const QString& barbarian_filename = tmp_barbarian.getIconFilename();
     _barbarian_avatar = new QPixmap(barbarian_filename.toUtf8().constData());
     if (_barbarian_avatar == 0)
         DVX(("barbarian avatar could not be loaded from file \"%s\"", qPrintable(barbarian_filename)));
-    *_barbarian_avatar = _barbarian_avatar->scaledToHeight(HeroQuestLevelWindow::FIELD_SIZE);
+    *_barbarian_avatar = _barbarian_avatar->scaledToHeight(ParameterStorage::instance->getFieldSize());
 
-    Dwarf tmp_dwarf(false);
+    Dwarf tmp_dwarf;
     const QString& dwarf_filename = tmp_dwarf.getIconFilename();
     _dwarf_avatar = new QPixmap(dwarf_filename.toUtf8().constData());
     if (_dwarf_avatar == 0)
         DVX(("dwarf avatar could not be loaded from file \"%s\"", qPrintable(dwarf_filename)));
-    *_dwarf_avatar = _dwarf_avatar->scaledToHeight(HeroQuestLevelWindow::FIELD_SIZE);
+    *_dwarf_avatar = _dwarf_avatar->scaledToHeight(ParameterStorage::instance->getFieldSize());
 
-    Alb tmp_alb(false);
+    Alb tmp_alb;
     const QString& alb_filename = tmp_alb.getIconFilename();
     _alb_avatar = new QPixmap(alb_filename.toUtf8().constData());
     if (_barbarian_avatar == 0)
         DVX(("alb avatar could not be loaded from file \"%s\"", qPrintable(alb_filename)));
-    *_alb_avatar = _alb_avatar->scaledToHeight(HeroQuestLevelWindow::FIELD_SIZE);
+    *_alb_avatar = _alb_avatar->scaledToHeight(ParameterStorage::instance->getFieldSize());
 
-    Magician tmp_magician(false);
+    Magician tmp_magician;
     const QString& magician_filename = tmp_magician.getIconFilename();
     _magician_avatar = new QPixmap(magician_filename.toUtf8().constData());
     if (_magician_avatar == 0)
         DVX(("magician avatar could not be loaded from file \"%s\"", qPrintable(magician_filename)));
-    *_magician_avatar = _magician_avatar->scaledToHeight(HeroQuestLevelWindow::FIELD_SIZE);
+    *_magician_avatar = _magician_avatar->scaledToHeight(ParameterStorage::instance->getFieldSize());
 
     // generate _inactive_avatar
-    _inactive_avatar = new QPixmap(HeroQuestLevelWindow::FIELD_SIZE, HeroQuestLevelWindow::FIELD_SIZE);
+    _inactive_avatar = new QPixmap(ParameterStorage::instance->getFieldSize(),
+            ParameterStorage::instance->getFieldSize());
 
     QColor fill_color(70, 70, 70, 255);
     QColor rect_color(150, 150, 150, 255);
 
     QPainter* painter = new QPainter(_inactive_avatar);
-    painter->fillRect(0, 0, HeroQuestLevelWindow::FIELD_SIZE-1, HeroQuestLevelWindow::FIELD_SIZE-1, fill_color);
+    painter->fillRect(0, 0, ParameterStorage::instance->getFieldSize() - 1,
+            ParameterStorage::instance->getFieldSize() - 1, fill_color);
 
     QPen pen(rect_color);
     pen.setWidth(1);
     painter->setPen(pen);
-    painter->drawRect(0, 0, HeroQuestLevelWindow::FIELD_SIZE-1, HeroQuestLevelWindow::FIELD_SIZE-1);
+    painter->drawRect(0, 0, ParameterStorage::instance->getFieldSize() - 1,
+            ParameterStorage::instance->getFieldSize() - 1);
 }
 
 QPushButton* HeroQuestNewGameDialog::getButton(const QString& str_id)

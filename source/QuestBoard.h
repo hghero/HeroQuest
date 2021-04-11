@@ -56,13 +56,10 @@ public:
 	void computeViewedFields(const NodeID& field, std::vector<NodeID>* viewed_fields) const;
 	*/
 	bool fieldCanBeViewedFromField(const NodeID& field1, const NodeID& field2, bool respect_field2_borders) const;
+    bool nodesAreInSameRowOrColumn(const NodeID& field1, const NodeID& field2) const;
 
 	bool getNodeID(const Vec2i& screen_coords, NodeID* node_id) const;
 	bool getTransitionByNearestNeighbours(const Vec2i& screen_coords, std::pair<NodeID, NodeID>* transition) const;
-
-	//! width and height of a field in screen pixels
-	int getFieldWidth() const;
-	int getFieldHeight() const;
 
 	unsigned int getRoomID(const NodeID& field) const;
 
@@ -114,6 +111,8 @@ private:
 
 	void handleMouseEventInActionModeMoveOrAttackOrOpenDoor(QMouseEvent* event);
     void handleMouseEventInActionModeSelectFieldOrDoor(QMouseEvent* event);
+    void handleMouseEventInActionModeSelectFieldInVisualLineOfSight(QMouseEvent* event, const Hero* related_hero);
+    void handleMouseEventInActionModeSelectAdjacentField(QMouseEvent* event, const Hero* related_hero);
 
 	void assignRoomIDs();
 	void assignRoomIDs(const NodeID& node_id_top_left, unsigned int width, unsigned int height, unsigned int id);

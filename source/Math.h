@@ -231,9 +231,10 @@ public:
 
 	Line(const Vec2i& p1, const Vec2i& p2)
 	:
-	_p1(p1),
-	_p2(p2)
+            _p1(), _p2()
 	{
+        _p1 = p1;
+        _p2 = p2;
 		if (_p1 == _p2)
 		{
 			std::cout << "Warning: line not well-defined! p1 = " << p1 << "; p2 = " << p2 << std::endl;
@@ -267,8 +268,8 @@ public:
 			   p.y >= p_small_y && p.y <= p_great_y;
 	};
 
-private:
-	Vec2i _p1, _p2;
+    private:
+    Vec2i _p1, _p2;
 };
 
 // ===============================================
@@ -279,7 +280,7 @@ template <class ElementType>
 typename ElementType getRandomElementByValue(std::vector<typename ElementType>& container)
 {
 	if (container.size() == 0)
-		cout << "Internal program error: container is empty!" << endl;
+        std::cout << "Internal program error: container is empty!" << std::endl;
 
 	uint r = randomNumber(container.size());
 

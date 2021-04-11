@@ -14,6 +14,7 @@ class InventoryItem
 
     virtual bool isTreasureCard() const;
     virtual bool isSpellCard() const;
+    virtual bool isEquipmentCard() const;
 
     virtual bool save(std::ostream& stream) const;
     virtual bool load(std::istream& stream);

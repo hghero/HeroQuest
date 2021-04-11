@@ -240,6 +240,30 @@ bool Node::isNeighbor(const NodeID& node_id) const
 	return false;
 }
 
+/*!
+ * @param node_id
+ * @return True iff other_node_id has a common neighbour with this node.
+ */
+bool Node::hasCommonNeighborWith(const Node& other_node) const
+{
+    const vector<NodeID>& other_node_neighbors = other_node.getNeighbors();
+    for (vector<NodeID>::const_iterator it_neighbor = _neighbors.begin(); it_neighbor != _neighbors.end();
+            ++it_neighbor)
+    {
+        const NodeID& neighbor = *it_neighbor;
+        for (vector<NodeID>::const_iterator it_other_node_neighbor = other_node_neighbors.begin();
+                it_other_node_neighbor != other_node_neighbors.end(); ++it_other_node_neighbor)
+        {
+            const NodeID& other_neighbor = *it_other_node_neighbor;
+            if (other_neighbor == neighbor)
+                return true;
+        }
+    }
+
+    // no matching neighbor found
+    return false;
+}
+
 bool Node::save(ostream& stream) const
 {
     // _neighbors

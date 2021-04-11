@@ -2,9 +2,14 @@
 #define TREASURE_CARD_DESCRIPTION_H
 
 #include <list>
+#include <vector>
+#include <set>
+
 #include <QtCore/QString>
 
-#include "Playground.h"
+#include "TreasureDataTypes.h"
+
+class QPixmap;
 
 /*!
  * Interprets and stores the treasure card descriptions given by .txt treasure card files.
@@ -24,8 +29,8 @@ public:
 	void setAmount(unsigned int amount);
 	unsigned int getAmount() const;
 
-	void setTreasureImageID(const Playground::TreasureImageID& treasure_image_id);
-	const Playground::TreasureImageID& getTreasureImageID() const;
+    void setTreasureImageID(const TreasureDataTypes::TreasureImageID& treasure_image_id);
+    const TreasureDataTypes::TreasureImageID& getTreasureImageID() const;
 
 	void setText(const QString& text);
 	const QString& getText() const;
@@ -52,7 +57,7 @@ public:
     void updateTreasureImage();
 
 private:
-	static Playground::TreasureImageID getTreasureImageID(const QString& str);
+    static TreasureDataTypes::TreasureImageID getTreasureImageID(const QString& str);
 
 	bool getInventoryItemsInternal(std::vector<QString>* items) const;
 	bool getImmediateActionsInternal(std::vector<QString>* immediate_actions) const;
@@ -60,7 +65,7 @@ private:
 	QString _id; //!< type of treasure card; given by .txt file name
 	QPixmap* _treasure_image; // stored in Playground
 	unsigned int _amount; //!< number of treasure cards of this kind
-	Playground::TreasureImageID _image_id;
+    TreasureDataTypes::TreasureImageID _image_id;
 	QString _text;
 	std::list<QString> _actions;
 };

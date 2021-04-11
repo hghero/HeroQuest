@@ -138,7 +138,7 @@ const Inventory* Inventory::ConstIterator::getInventory() const
 Inventory::Inventory()
 : _gold(0),
   _treasure_cards(),
-  _spell_cards()
+  _spell_cards(), _equipment_cards()
 {
 	// NIX
 }
@@ -163,12 +163,17 @@ void Inventory::addGold(int add_gold)
 	_gold += add_gold;
 }
 
+void Inventory::subtractGold(int subtract_gold)
+{
+    _gold -= subtract_gold;
+}
+
 const set<TreasureCard>& Inventory::getTreasureCards() const
 {
 	return _treasure_cards;
 }
 
-const TreasureCard* Inventory::getTreasureCard(const Playground::TreasureImageID card_image_id)
+const TreasureCard* Inventory::getTreasureCard(const TreasureDataTypes::TreasureImageID card_image_id)
 {
     for (set<TreasureCard>::const_iterator it = _treasure_cards.begin(); it != _treasure_cards.end(); ++it)
     {
@@ -199,16 +204,29 @@ void Inventory::addSpellCard(const SpellCard& spell_card)
     _spell_cards.insert(spell_card);
 }
 
+void Inventory::addSpellCards(const vector<SpellCard>& spell_cards)
+{
+    for (vector<SpellCard>::const_iterator it = spell_cards.begin(); it != spell_cards.end(); ++it)
+    {
+        addSpellCard(*it);
+    }
+}
+
 void Inventory::removeSpellCard(const SpellCard& spell_card)
 {
     _spell_cards.erase(spell_card);
+}
+
+void Inventory::removeSpellCards()
+{
+    _spell_cards.clear();
 }
 
 bool Inventory::hasResistancePotion() const
 {
     for (set<TreasureCard>::const_iterator it = _treasure_cards.begin(); it != _treasure_cards.end(); ++it)
     {
-        if (it->getTreasureDescription().getTreasureImageID() == Playground::TREASURE_CARD_RESISTANCE_POTION)
+        if (it->getTreasureDescription().getTreasureImageID() == TreasureDataTypes::TREASURE_CARD_RESISTANCE_POTION)
             return true;
     }
 
@@ -219,7 +237,7 @@ bool Inventory::hasImmunizationPotion() const
 {
     for (set<TreasureCard>::const_iterator it = _treasure_cards.begin(); it != _treasure_cards.end(); ++it)
     {
-        if (it->getTreasureDescription().getTreasureImageID() == Playground::TREASURE_CARD_IMMUNIZATION_POTION)
+        if (it->getTreasureDescription().getTreasureImageID() == TreasureDataTypes::TREASURE_CARD_IMMUNIZATION_POTION)
             return true;
     }
 
@@ -230,11 +248,41 @@ bool Inventory::hasHealingPotion() const
 {
     for (set<TreasureCard>::const_iterator it = _treasure_cards.begin(); it != _treasure_cards.end(); ++it)
     {
-        if (it->getTreasureDescription().getTreasureImageID() == Playground::TREASURE_CARD_HEALING_POTION)
+        if (it->getTreasureDescription().getTreasureImageID() == TreasureDataTypes::TREASURE_CARD_HEALING_POTION)
             return true;
     }
 
     return false;
+}
+
+const set<EquipmentCard>& Inventory::getEquipmentCards() const
+{
+    return _equipment_cards;
+}
+
+/*!
+ * @param equipment_card
+ * @return true if equipment_card was inserted into _equipment_cards, i.e. equipment_card didn't exist in that
+ *         set already before
+ */
+bool Inventory::addEquipmentCard(const EquipmentCard& equipment_card)
+{
+    return _equipment_cards.insert(equipment_card).second;
+}
+
+bool Inventory::containsEquipmentCard(const EquipmentCard& equipment_card) const
+{
+    return _equipment_cards.find(equipment_card) != _equipment_cards.end();
+}
+
+void Inventory::removeEquipmentCard(const EquipmentCard& equipment_card)
+{
+_equipment_cards.erase(equipment_card);
+}
+
+void Inventory::removeEquipmentCards()
+{
+_equipment_cards.clear();
 }
 
 Inventory::ConstIterator Inventory::begin() const
@@ -249,7 +297,7 @@ Inventory::ConstIterator Inventory::end() const
 
 size_t Inventory::size() const
 {
-	return _treasure_cards.size() + _spell_cards.size();
+    return _treasure_cards.size() + _spell_cards.size() + _equipment_cards.size();
 }
 
 bool Inventory::empty() const
@@ -271,6 +319,13 @@ bool Inventory::save(std::ostream& stream) const
     // spell cards
     StreamUtils::writeUInt(stream, _spell_cards.size());
     for (set<SpellCard>::const_iterator it = _spell_cards.begin(); it != _spell_cards.end(); ++it)
+    {
+        it->save(stream);
+    }
+
+    // equipment cards
+    StreamUtils::writeUInt(stream, _equipment_cards.size());
+    for (set<EquipmentCard>::const_iterator it = _equipment_cards.begin(); it != _equipment_cards.end(); ++it)
     {
         it->save(stream);
     }
@@ -304,6 +359,18 @@ bool Inventory::load(std::istream& stream)
         spell_card.load(stream);
 
         _spell_cards.insert(spell_card);
+    }
+
+    // equipment cards
+    _equipment_cards.clear();
+    uint equipment_cards_size;
+    StreamUtils::readUInt(stream, &equipment_cards_size);
+    for (uint i = 0; i < equipment_cards_size; ++i)
+    {
+        EquipmentCard equipment_card;
+        equipment_card.load(stream);
+
+        _equipment_cards.insert(equipment_card);
     }
 
     return !stream.fail();

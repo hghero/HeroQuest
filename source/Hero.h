@@ -16,8 +16,8 @@ private:
 	typedef Creature Parent;
 
 public:
-	//Hero();
-	Hero(const QString& name, int num_dice_move, int num_dice_attack, int num_dice_defend, int life_points, int life_points_max, int intelligence_points, bool add_to_level = true);
+    Hero(const QString& name, int num_dice_move, int num_dice_attack, int num_dice_defend, int life_points,
+            int life_points_max, int intelligence_points);
 	virtual ~Hero();
 
 	virtual const QString& getIconFilename() const;
@@ -28,10 +28,13 @@ public:
 	bool getCanMoveThroughWalls() const;
     void setCanMoveThroughWalls(bool value);
 	
-	virtual int getNumDiceAttack() const;
+    virtual int getHighestNumDiceRegularAttack() const;
+    virtual int getHighestNumDiceAttack(const Creature* defender) const;
 	void setNumDiceAttackExtra(int num_dice_attack_extra);
+    virtual int getNumDiceAttackExtra() const;
 
     virtual int getNumDiceDefend() const;
+    virtual int getHighestNumDiceDefend() const;
     void setNumDiceDefendExtra(int num_dice_defend_extra);
 
 	int getGold() const; // deprecated
@@ -54,7 +57,17 @@ public:
 
 	void updateTreasureImages();
 
+    void addSpellFamily(SpellCard::SpellFamily family);
+
+    void obtainSpellCardsFromStorage();
+
+    int getNumAttackDiceDiagonallyAdjacent() const;
+    int getNumAttackDiceDistance() const;
+
 protected:
+    int computeHighestNumDiceForRegularAttackFromEquipment() const;
+    int computeAdditionalNumDiceForDefenceFromEquipment() const;
+
 	// movement
 	int _num_dice_move;
 	int _num_dice_move_extra;
@@ -69,6 +82,9 @@ protected:
 	// equipment and valuables
 	Inventory _inventory;
 
+    // spells
+    std::vector<SpellCard::SpellFamily> _spell_families;
+
 private:
 	virtual Creature& operator=(const Hero& other);
 	virtual Creature* copy() const;
@@ -82,7 +98,7 @@ private:
 	static const QString ICON_FILENAME;
 
 public:
-	Barbarian(bool add_to_level = true);
+    Barbarian();
 	virtual ~Barbarian();
 
 	virtual const QString& getIconFilename() const;
@@ -98,7 +114,7 @@ private:
 	static const QString ICON_FILENAME;
 
 public:
-	Dwarf(bool add_to_level = true);
+    Dwarf();
 	virtual ~Dwarf();
 
 	virtual const QString& getIconFilename() const;
@@ -117,18 +133,13 @@ private:
 	static const QString ICON_FILENAME;
 
 public:
-	Alb(bool add_to_level = true);
+    Alb();
 	virtual ~Alb();
 
 	virtual const QString& getIconFilename() const;
 	virtual bool canCastSpells() const;
-	void setSpellFamily(SpellCard::SpellFamily& family);
-	const SpellCard::SpellFamily& getSpellFamily() const;
 
 	static QString className();
-
-private:
-	SpellCard::SpellFamily _spell_family;
 };
 
 // ==================================================================
@@ -142,16 +153,13 @@ private:
 	static const QString ICON_FILENAME;
 
 public:
-	Magician(bool add_to_level = true);
+    Magician();
 	virtual ~Magician();
 
 	virtual const QString& getIconFilename() const;
 	virtual bool canCastSpells() const;
 
 	static QString className();
-
-private:
-    SpellCard::SpellFamily _spell_family;
 };
 
 // ==================================================================

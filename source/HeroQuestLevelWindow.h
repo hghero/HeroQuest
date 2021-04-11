@@ -21,6 +21,7 @@
 
 class QMenuBar;
 class QLabel;
+class QCloseEvent;
 class Level;
 class HeroStatisticPane;
 class ButtonPane;
@@ -30,7 +31,11 @@ class Monster;
 class NodeID;
 class InventoryItem;
 class SpellCardStorage;
+class TreasureCardStorage;
+class EquipmentCardStorage;
 class Command;
+class HeroCamp;
+class PitTrap;
 
 class HeroQuestLevelWindow : public QMainWindow
 {
@@ -41,8 +46,6 @@ class HeroQuestLevelWindow : public QMainWindow
 
   public:
     static HeroQuestLevelWindow* _hero_quest;
-
-    static int FIELD_SIZE;
 
     static const QString BUTTON_STYLE_ACTIVE;
     static const QString BUTTON_STYLE_INACTIVE;
@@ -73,7 +76,9 @@ class HeroQuestLevelWindow : public QMainWindow
         USER_INTERACTION_NORMAL = 0, //
         USER_INTERACTION_SELECT_HERO, //
         USER_INTERACTION_SELECT_CREATURE, //
-        USER_INTERACTION_SELECT_CREATURE_OR_DOOR
+        USER_INTERACTION_SELECT_CREATURE_OR_DOOR, //
+        USER_INTERACTION_SELECT_CREATURE_IN_HORIZONTAL_OR_VERTICAL_LINE_OF_SIGHT, //
+        USER_INTERACTION_SELECT_ADJACENT_PIT_TRAP
     } UserInteractionModeEnum;
 
     HeroQuestLevelWindow(
@@ -81,7 +86,10 @@ class HeroQuestLevelWindow : public QMainWindow
             QApplication& app,
             const QString& filename,
             GameState* game_state,
-            SpellCardStorage* spell_card_storage);
+            SpellCardStorage* spell_card_storage, //
+            TreasureCardStorage* treasure_card_storage, //
+            EquipmentCardStorage* equipment_card_storage, //
+            HeroCamp& hero_camp);
     ~HeroQuestLevelWindow();
 
     std::vector<Hero*>& getHeroes();
@@ -93,6 +101,7 @@ class HeroQuestLevelWindow : public QMainWindow
     std::vector<HeroStatisticPane*>& getHeroStatisticPanes();
 
     Creature* getCreature(uint referencing_id);
+    Hero* getHero(uint referencing_id);
 
     void resetActionPane();
 
@@ -104,16 +113,19 @@ class HeroQuestLevelWindow : public QMainWindow
     bool useInventoryItem(const InventoryItem& inventory_item);
     bool useTreasureCard(const TreasureCard& treasure_card);
     bool useSpellCard(const SpellCard& spell_card);
+    bool useEquipmentCard(const EquipmentCard& equipment_card);
 
     bool creatureTriesToWakeUp(Creature& creature);
 
     UserInteractionMode getUserInteractionMode() const;
-    void setUserInteractionMode(UserInteractionMode user_interaction_mode);
+    void setUserInteractionMode(UserInteractionMode user_interaction_mode, const Hero* related_hero = 0);
     void setUserSelectedNodeID(const NodeID& node_id);
     void setUserSelectedTwoNodeIDs(const std::pair<NodeID, NodeID>& node_ids);
     Hero* userSelectsHero();
     Creature* userSelectsCreature();
+    Creature* userSelectsCreatureInHorizontalOrVerticalLineOfSightOf(const Hero& attacker);
     void userSelectsCreatureOrDoor(Creature** creature, Door** door);
+    PitTrap* userSelectsAdjacentPitTrap(const Hero& hero);
 
     bool checkApplySpell(Hero* hero);
     bool checkDefend(Hero* hero);
@@ -180,6 +192,7 @@ class HeroQuestLevelWindow : public QMainWindow
 
     void exitLevelFinished();
     void exitLost();
+    virtual void closeEvent(QCloseEvent* event);
 
     protected:
     virtual void paintEvent(QPaintEvent* event);
@@ -193,7 +206,7 @@ class HeroQuestLevelWindow : public QMainWindow
 
     void startGame(const QString& filename);
 
-    void addHeroesAccordingToGameState();
+    void addHeroStatisticPanes();
     template <class HeroType>
     Hero* addHero();
 
@@ -214,7 +227,10 @@ class HeroQuestLevelWindow : public QMainWindow
     QApplication& _app;
     QAction* _save_action;
     GameState* _game_state;
+    HeroCamp& _hero_camp;
     SpellCardStorage* _spell_card_storage;
+    TreasureCardStorage* _treasure_card_storage;
+    EquipmentCardStorage* _equipment_card_storage;
     Level* _level;
     std::vector<Hero*> _heroes;
 
@@ -255,17 +271,5 @@ Q_DECLARE_METATYPE(Hero*);
 Q_DECLARE_METATYPE(std::vector<DiceRollPane::AttackDiceResult>*);
 Q_DECLARE_METATYPE(TreasureCard*);
 Q_DECLARE_METATYPE(TreasureDescription*);
-
-/*!
- * Adds a hero of type HeroType, including statistic panel, to the game, and returns the added hero.
- */
-template <class HeroType>
-Hero* HeroQuestLevelWindow::addHero()
-{
-    Hero* hero = new HeroType();
-    hero->create();
-    _heroes.push_back(hero);
-    return _heroes.back();
-}
 
 #endif
