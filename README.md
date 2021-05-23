@@ -6,10 +6,8 @@ When it came to implementing dialogs, however, I realized that Allegro was not m
 I decided to switch to Qt.
 
 As I don't have much time to push this project, progress is being made very slowly only.
-Most time was needed so far for the load/save feature and the spells.
 
-Currently only the first level is playable, and there is no detection of end-of-level yet.
-Also missing yet are equipment cards.
+Currently only the first two levels are playable.
 
 # Work and compile
 - development: Eclipse CDT
@@ -18,3 +16,4 @@ Also missing yet are equipment cards.
 
 # Version History
 210116 Initial import.
+210523 Level 2, equipment cards, buy equipment after level finish.
