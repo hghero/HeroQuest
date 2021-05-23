@@ -140,6 +140,7 @@ class Playground : public QLabel
     void setRoomVisible(const Door* door);
 	void updateFieldVisibility(const Creature& creature);
 	void updateFieldVisibility();
+    void makeAllRelevantNodesVisible();
 
     virtual bool save(std::ostream& stream) const;
     virtual bool load(std::istream& stream);

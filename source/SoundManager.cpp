@@ -95,16 +95,19 @@ bool SoundManager::loadSoundsFromFiles()
 	if (!loadSoundFromFile(SOUND_THROW_DICE, ":/sounds/throw_dice.wav"))
 		return false;
 
-	if (!loadSoundFromFile(DRAW_TREASURE_CARD_GOOD, ":/sounds/draw_treasure_card_good.wav"))
+	if (!loadSoundFromFile(SOUND_DRAW_TREASURE_CARD_GOOD, ":/sounds/draw_treasure_card_good.wav"))
 		return false;
 
-    if (!loadSoundFromFile(DRAW_TREASURE_CARD_BAD, ":/sounds/draw_treasure_card_bad.wav"))
+    if (!loadSoundFromFile(SOUND_DRAW_TREASURE_CARD_BAD, ":/sounds/draw_treasure_card_bad.wav"))
         return false;
 
-    if (!loadSoundFromFile(CAST_SPELL, ":/sounds/cast_spell.wav"))
+    if (!loadSoundFromFile(SOUND_CAST_SPELL, ":/sounds/cast_spell.wav"))
         return false;
 
     if (!loadSoundFromFile(SOUND_DISARM_PIT_TRAP, ":/sounds/disarm_pit_trap.wav"))
+        return false;
+
+    if (!loadSoundFromFile(SOUND_SIREN, ":/sounds/siren.wav"))
         return false;
 
 	return true;

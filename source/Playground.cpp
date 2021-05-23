@@ -1086,6 +1086,67 @@ void Playground::updateFieldVisibility()
 	}
 }
 
+/*!
+ * Makes all nodes (and contained Decoration) visible which are relevant for the current level.
+ * For this we use a board-graph-based filling algorithm starting with all creature positions.
+ */
+void Playground::makeAllRelevantNodesVisible()
+{
+    // make all decoration visible
+    set<Decoration*> decoration;
+    HeroQuestLevelWindow::_hero_quest->getLevel()->getDecoration(&decoration);
+    for (set<Decoration*>::const_iterator it_decoration = decoration.begin(); it_decoration != decoration.end();
+            ++it_decoration)
+    {
+        Decoration* decoration = *it_decoration;
+        decoration->setVisible(true);
+    }
+
+    // nodes: start off with creature fields
+    set<NodeID> working_set;
+    for (map<Creature*, NodeID>::iterator it_creature = _creatures.begin(); it_creature != _creatures.end();
+            ++it_creature)
+    {
+        working_set.insert(it_creature->second);
+    }
+    // add all nodes theoretically reachable via board graph
+    BoardGraph* board_graph = _quest_board->getBoardGraph();
+    set<NodeID> visited;
+    while (!working_set.empty())
+    {
+        // take the first node from the working set
+        set<NodeID>::iterator it_working_set = working_set.begin();
+        NodeID current_node_id = *it_working_set;
+        const Node& current_node = board_graph->getNode(current_node_id);
+
+        // remove it from the working set and add it to the visited set
+        working_set.erase(it_working_set);
+        visited.insert(current_node_id);
+
+        // add all its not-yet-visited neighbours to the working set
+        const vector<NodeID>& current_neighbours = current_node.getNeighbors();
+        for (vector<NodeID>::const_iterator it_neighbour = current_neighbours.begin();
+                it_neighbour != current_neighbours.end(); ++it_neighbour)
+        {
+            const NodeID& neighbour = *it_neighbour;
+            if (visited.find(neighbour) == visited.end())
+            {
+                // not yet visited => add to working set
+                working_set.insert(neighbour);
+            }
+        }
+    }
+
+    // make all visited nodes visible
+    setNodeVisibility(visited, true);
+
+    // make all nodes visible which can be effectively seen by a visited node
+    for (set<NodeID>::const_iterator it_visited = visited.begin(); it_visited != visited.end(); ++it_visited)
+    {
+        setNodesViewableFromNodeVisible(*it_visited);
+    }
+}
+
 bool Playground::save(ostream& stream) const
 {
     //! Map of heroes (barbarian, dwarf, alb, magician) and monsters, mapped to Playground positions (NodeID)

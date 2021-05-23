@@ -831,6 +831,8 @@ void OpenChestCommand::run()
 
     HeroQuestLevelWindow::_hero_quest->execDialogOpenChest(QVariant::fromValue(&treasure_description));
 
+    treasure_description.executeImmediateActions();
+
     chest->setOpen(true);
 }
 
@@ -880,9 +882,9 @@ void DrawTreasureCardCommand::run()
 #endif
 
     if (treasure_card.getCharacteristic() == TreasureCard::GOOD_CHARACTERISTIC)
-        HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::DRAW_TREASURE_CARD_GOOD);
+        HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::SOUND_DRAW_TREASURE_CARD_GOOD);
     else
-        HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::DRAW_TREASURE_CARD_BAD);
+        HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::SOUND_DRAW_TREASURE_CARD_BAD);
 
     HeroQuestLevelWindow::_hero_quest->execDialogTreasureCard(QVariant::fromValue(&treasure_card));
 

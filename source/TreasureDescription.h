@@ -47,6 +47,7 @@ public:
 
 	bool containsImmediateActions() const;
 	bool getImmediateActions(std::vector<QString>* items) const;
+    void executeImmediateActions() const;
 
 	bool containsInventoryItem() const;
 	bool getInventoryItems(std::vector<QString>* items) const;
@@ -56,11 +57,18 @@ public:
 
     void updateTreasureImage();
 
+    void disarmTraps();
+
 private:
     static TreasureDataTypes::TreasureImageID getTreasureImageID(const QString& str);
 
 	bool getInventoryItemsInternal(std::vector<QString>* items) const;
 	bool getImmediateActionsInternal(std::vector<QString>* immediate_actions) const;
+
+    static QString getEmbracedValue(const QString& action, QString::SplitBehavior split_behaviour =
+            QString::SkipEmptyParts);
+    static bool getValueOfGoldExpression(const QString& expr, uint* result_value);
+    static bool interpretRoundExpression(const QString& expr, QString* command, uint* result_value);
 
 	QString _id; //!< type of treasure card; given by .txt file name
 	QPixmap* _treasure_image; // stored in Playground

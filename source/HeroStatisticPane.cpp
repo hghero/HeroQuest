@@ -11,6 +11,7 @@
 #include "Debug.h"
 #include "Level.h"
 
+//#define DEBUG_PANE_SIZES
 
 using namespace std;
 
@@ -160,16 +161,16 @@ _inventory_button(0)
     right_content->setFixedHeight(vbox_layout->sizeHint().height());
     right_content->setFixedWidth(vbox_layout_right->sizeHint().width());
 
-    // adjust widths to remaining free screen size available in main window's info pane
-    int info_pane_width = HeroQuestLevelWindow::_hero_quest->getInfoPaneSize().width();
-    int free_space = info_pane_width - left_content->width() - right_content->width();
-    if (free_space > 0)
-    {
-        left_content->setFixedWidth(left_content->width() + free_space / 2);
-        right_content->setFixedWidth(right_content->width() + free_space / 2);
-    }
-
     setFixedSize(hbox_layout->sizeHint());
+
+#ifdef DEBUG_PANE_SIZES
+    DVX(("================================================="));
+    DVX(("HeroStatisticPane::HeroStatisticPane(%s)", qPrintable(hero->getName())));
+    DVX(("-------------------------------------------------"));
+    DVX(("left_content width x height = %d x %d", left_content->width(), left_content->height()));
+    DVX(("right_content width x height = %d x %d", right_content->width(), right_content->height()));
+    DVX(("hbox_layout sizeHint = %d x %d", hbox_layout->sizeHint().width(), hbox_layout->sizeHint().height()));
+#endif
 }
 
 HeroStatisticPane::~HeroStatisticPane()

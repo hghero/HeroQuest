@@ -46,11 +46,6 @@ public:
 
 protected:
 	TreasureDescription _treasure_description;
-
-private:
-	static QString getEmbracedValue(const QString& action, QString::SplitBehavior split_behaviour = QString::SkipEmptyParts);
-	static bool getValueOfGoldExpression(const QString& expr, uint* result_value);
-	static bool interpretRoundExpression(const QString& expr, QString* command, uint* result_value);
 };
 
 #endif

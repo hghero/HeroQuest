@@ -50,12 +50,6 @@ _has_cast_spell(false),
 _num_spell_casts_left(1),
  _move_points(0), _sleeping(false)
 {
-
-    Creature* creature = 0;
-    if (HeroQuestLevelWindow::_hero_quest->getLevel() != 0)
-        creature = HeroQuestLevelWindow::_hero_quest->getLevel()->getCurrentlyActingCreature();
-    DV(
-            ("_num_attacks_left = 1 (creator), %s", qPrintable(creature == 0 ? "null" : creature->getName())));
 }
 
 Level::ActionStates::~ActionStates()
@@ -1208,6 +1202,9 @@ void Level::openDoor(const Door* destination_door)
 
     // update button visibility
     HeroQuestLevelWindow::_hero_quest->updateButtons();
+
+    // execute follow-up actions specific to the level
+    doorHasBeenOpenedBy(getCurrentlyActingCreature(), destination_door);
 }
 
 void Level::startHeroTurn()
@@ -1377,6 +1374,34 @@ void Level::cleanupGameMaterialOnLevelFinish()
 
     // --- spell cards ---
     HeroCamp::instance->redistributeSpellCardsToHeroes();
+}
+
+/*!
+ * Called when the level was finished successfully. Here, Heroes will obtain their level reward
+ * (see reimplementation in each level).
+ */
+void Level::obtainLevelReward()
+{
+}
+
+/*!
+ * Is called when creature has been moved onto node.
+ *
+ * @param creature
+ * @param node
+ */
+void Level::fieldHasBeenReachedBy(const Creature* creature, const NodeID& node)
+{
+}
+
+/*!
+ * Is called when creature has opened door.
+ *
+ * @param creature
+ * @param door
+ */
+void Level::doorHasBeenOpenedBy(const Creature* creature, const Door* door)
+{
 }
 
 void Level::putSpellCardsBackToStorage(Hero* hero)
@@ -1947,6 +1972,8 @@ bool Level::moveHero(Hero& hero, const NodeID& dest_node, unsigned int additiona
     HeroQuestLevelWindow::_hero_quest->updateButtons();
 
 	HeroQuestLevelWindow::_hero_quest->delay(MOVE_DELAY);
+
+    fieldHasBeenReachedBy(&hero, dest_node);
 
 	return hero_may_continue_moving;
 }

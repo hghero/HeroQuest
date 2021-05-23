@@ -5,6 +5,9 @@
 
 class ParameterStorage
 {
+    private:
+    static const uint MARGIN;
+
     public:
     ParameterStorage();
 
@@ -13,6 +16,8 @@ class ParameterStorage
     uint getScreenWidth() const;
     uint getScreenHeight() const;
     uint getFieldSize() const;
+    uint getActionPaneWidth() const;
+    uint getInfoPaneWidth() const;
 
     static ParameterStorage* instance;
 

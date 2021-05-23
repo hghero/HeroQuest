@@ -15,6 +15,7 @@
 #include "HeroQuestNewGameDialog.h"
 #include "HeroQuestLevelWindow.h"
 #include "Level01TheProbation.h"
+#include "Level02SavingSirRagnar.h"
 #include "GameState.h"
 #include "ParameterStorage.h"
 #include "SpellCardStorage.h"
@@ -68,6 +69,7 @@ int main(int argc, char* argv[])
         // TODO: automatically insert all existing levels' names.
         // Note that currently saved games do contain only the current level's name, no list of all (used) levels.
         game_state._level_names.push_back(Level01TheProbation::prettyClassName());
+        game_state._level_names.push_back(Level02SavingSirRagnar::prettyClassName());
 
         bool game_start_conditions_complete = false;
 
@@ -152,7 +154,7 @@ int main(int argc, char* argv[])
         hero_camp.createHeroes(game_state._hero_names, game_state._alb_spell_family);
 
         // loop over the levels to play
-        for (uint i_level = (uint) (game_state._current_level); i_level < game_state._level_names.size(); ++i_level)
+        for (uint& i_level = (uint&) (game_state._current_level); i_level < game_state._level_names.size(); ++i_level)
         {
             // briefing
             DialogLevelBriefing dialog_level_briefing((GameState::LevelID) i_level);
@@ -166,10 +168,11 @@ int main(int argc, char* argv[])
             }
 
             // for now: normal operation mode
-            game_state._current_level_state = GameState::RUNNING;
+            game_state._current_level_state = GameState::RUNNING; // TODO: wozu braucht man diesen levelState?
 
             HeroQuestLevelWindow hero_quest_level_window(HQ_VERSION, app, filename, &game_state, &spell_card_storage,
                     &treasure_card_storage, &equipment_card_storage, hero_camp);
+            filename = ""; // don't re-load the same level when we come here again
             hero_quest_level_window.show();
 
             // start global event loop
@@ -185,8 +188,8 @@ int main(int argc, char* argv[])
             }
 
             // DEBUG:
-            DialogBuyEquipment dialog_buy_equipment_choose_hero(hero_camp);
-            dialog_buy_equipment_choose_hero.exec();
+            //DialogBuyEquipment dialog_buy_equipment_choose_hero(hero_camp);
+            //dialog_buy_equipment_choose_hero.exec();
         }
     }
 

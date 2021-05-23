@@ -80,6 +80,7 @@
     <file alias="graphics/treasure_card_trap_wall.jpg">../resources/graphics/treasure_card_trap_wall.jpg</file>
     
     <file alias="graphics/warlock_table.jpg">../resources/graphics/warlock_table.jpg</file>
+    <file alias="graphics/witch_lord.jpg">../resources/graphics/witch_lord.jpg</file>
     <file alias="graphics/zombie.jpg">../resources/graphics/zombie.jpg</file>
     
     <file alias="graphics/equipment_card_armor.jpg">../resources/graphics/equipment_card_armor.jpg</file>
@@ -102,8 +103,10 @@
     <file alias="sounds/attack_monster_big_decrease_life_points.wav">../resources/sounds/attack_monster_big_decrease_life_points.wav</file>
     <file alias="sounds/attack_monster_small_decrease_life_points.wav">../resources/sounds/attack_monster_small_decrease_life_points.wav</file>
     <file alias="sounds/attack_no_skulls.wav">../resources/sounds/attack_no_skulls.wav</file>
+    <file alias="sounds/cast_spell.wav">../resources/sounds/cast_spell.wav</file>
     <file alias="sounds/chest_opens.wav">../resources/sounds/chest_opens.wav</file>
     <file alias="sounds/creature_moves.wav">../resources/sounds/creature_moves.wav</file>
+    <file alias="sounds/disarm_pit_trap.wav">../resources/sounds/disarm_pit_trap.wav</file>
     <file alias="sounds/door_opens.wav">../resources/sounds/door_opens.wav</file>
     <file alias="sounds/draw_treasure_card_bad.wav">../resources/sounds/draw_treasure_card_bad.wav</file>
     <file alias="sounds/draw_treasure_card_good.wav">../resources/sounds/draw_treasure_card_good.wav</file>
@@ -111,10 +114,9 @@
     <file alias="sounds/monster_dies.wav">../resources/sounds/monster_dies.wav</file>
     <file alias="sounds/pit_trap_triggers.wav">../resources/sounds/pit_trap_triggers.wav</file>
     <file alias="sounds/secret_door_opens.wav">../resources/sounds/secret_door_opens.wav</file>
+    <file alias="sounds/siren.wav">../resources/sounds/siren.wav</file>
     <file alias="sounds/spear_trap_triggers.wav">../resources/sounds/spear_trap_triggers.wav</file>
     <file alias="sounds/throw_dice.wav">../resources/sounds/throw_dice.wav</file>
-    <file alias="sounds/cast_spell.wav">../resources/sounds/cast_spell.wav</file>
-    <file alias="sounds/disarm_pit_trap.wav">../resources/sounds/disarm_pit_trap.wav</file>
     
     <file alias="treasure_cards/braveness_potion.txt">../resources/treasure_cards/braveness_potion.txt</file>
     <file alias="treasure_cards/gold_10_vest.txt">../resources/treasure_cards/gold_10_vest.txt</file>

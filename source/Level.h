@@ -154,7 +154,7 @@ public:
 
 	// inputs
 	void initCurrentHeroActionStateToMoveOrAttack();
-	void searchTrapsButtonClicked();
+    virtual void searchTrapsButtonClicked();
 	void searchTreasuresButtonClicked();
 	void delayTurnButtonClicked();
 	void endTurnButtonClicked();
@@ -257,6 +257,8 @@ public:
 
     void cleanupGameMaterialOnLevelFinish();
 
+    virtual void obtainLevelReward();
+
 protected:
 	bool prepareTreasureCards();
 
@@ -325,6 +327,9 @@ protected:
 	void handleSpearTrap(SpearTrap* spear_trap);
 
     bool currentHeroIsOnStairway();
+
+    virtual void fieldHasBeenReachedBy(const Creature* creature, const NodeID& node);
+    virtual void doorHasBeenOpenedBy(const Creature* creature, const Door* door);
 
 private:
     enum SwitchToNextCreatureResult

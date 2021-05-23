@@ -146,7 +146,8 @@ class HeroQuestLevelWindow : public QMainWindow
     void updateHeroStatisticPanes();
 
     void playSoundOnce(QVariant sound_id);
-    void removeHeroStatisticPane(Hero* hero);
+    void removeHeroStatisticPanes();
+    void removeHeroStatisticPane(const Hero* hero);
     void startHeroTurn();
 
     void execDialogOk(QVariant title, QVariant text);
@@ -194,6 +195,8 @@ class HeroQuestLevelWindow : public QMainWindow
     void exitLost();
     virtual void closeEvent(QCloseEvent* event);
 
+    void insertHeroStatisticPane(Hero* hero, size_t index, bool extrapolate_info_pane_size = false);
+
     protected:
     virtual void paintEvent(QPaintEvent* event);
 
@@ -203,6 +206,7 @@ class HeroQuestLevelWindow : public QMainWindow
     bool createLevel();
 
     void createGUIElements();
+    void addInfoPaneToCentralWidget();
 
     void startGame(const QString& filename);
 
@@ -213,6 +217,8 @@ class HeroQuestLevelWindow : public QMainWindow
     void addHeroStatisticPane(Hero* hero);
 
     void connectActionButtons();
+
+    void adjustInfoPaneHeight(QSize fixed_size = QSize(0, 0));
 
   private slots:
     void searchTrapsButtonClicked();
@@ -252,6 +258,7 @@ class HeroQuestLevelWindow : public QMainWindow
     ButtonPane* _button_pane;
     HintPane* _hint_pane;
     Playground* _playground;
+    QLabel* _info_pane_wrapper;
     QLabel* _info_pane;
 
     std::vector<HeroStatisticPane*> _hero_statistic_panes; // shown in the _info_pane

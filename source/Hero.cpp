@@ -541,3 +541,32 @@ QString Magician::className()
 }
 
 // ==================================
+
+const QString SirRagnar::ICON_FILENAME = ":/graphics/witch_lord.jpg";
+
+SirRagnar::SirRagnar()
+        :
+        Hero(SirRagnar::className(), 1, // num_dice_move
+                0, // num_dice_attack
+                2, // num_dice_defend
+                2, // life_points
+                2, // life_points_max
+                3) // intelligence_points (not specified in manual)
+{
+}
+
+SirRagnar::~SirRagnar()
+{
+}
+
+const QString& SirRagnar::getIconFilename() const
+{
+    return ICON_FILENAME;
+}
+
+QString SirRagnar::className()
+{
+    return "Sir Ragnar";
+}
+
+// ==================================

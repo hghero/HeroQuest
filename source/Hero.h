@@ -164,4 +164,23 @@ public:
 
 // ==================================================================
 
+/*!
+ * Sir Ragnar appears only in the 2nd level "Saving Sir Ragnar".
+ */
+class SirRagnar : public Hero
+{
+    private:
+    static const QString ICON_FILENAME;
+
+    public:
+    SirRagnar();
+    virtual ~SirRagnar();
+
+    virtual const QString& getIconFilename() const;
+
+    static QString className();
+};
+
+// ==================================================================
+
 #endif

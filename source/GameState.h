@@ -18,7 +18,7 @@ struct GameState
 
     enum LevelID
     {
-        LEVEL_THE_PROBATION = 0
+        LEVEL_THE_PROBATION = 0, LEVEL_SAVING_SIR_RAGNAR
     };
 
 	GameState();

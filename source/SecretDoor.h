@@ -3,6 +3,7 @@
 
 #include "Door.h"
 
+class QPainter;
 
 /*!
  * A door connects a room to another room, or a room to a hallway.
@@ -49,12 +50,12 @@ public:
 	}
 
 	//! Just calls redraw(), because the "selected" argument make so sense for SecretDoor.
-	virtual void redraw(bool selected)
+    virtual void redraw(QPainter& painter, bool selected)
 	{
-		redraw();
+        redraw(painter);
 	}
 
-	void redraw();
+    void redraw(QPainter& painter);
 
     virtual bool save(std::ostream& stream) const;
     virtual bool load(std::istream& stream);
@@ -68,6 +69,8 @@ protected:
 private:
 	// this constructor is not useful for SecretDoor
 	SecretDoor(const NodeID& f1, const NodeID& f2);
+
+    float getRotationAngle() const;
 };
 
 #endif

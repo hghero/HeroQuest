@@ -11,7 +11,7 @@ class QLayout;
 class LayoutHelper
 {
     public:
-    static uint removeUselessStretches(QLayout* layout);
+    static uint getNumWidgets(QLayout* layout);
 
     private:
     LayoutHelper();

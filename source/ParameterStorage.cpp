@@ -8,6 +8,7 @@
 using namespace std;
 
 ParameterStorage* ParameterStorage::instance = 0;
+const uint ParameterStorage::MARGIN = 5;
 
 ParameterStorage::ParameterStorage()
         :
@@ -42,6 +43,18 @@ uint ParameterStorage::getScreenHeight() const
 uint ParameterStorage::getFieldSize() const
 {
     return _field_size;
+}
+
+uint ParameterStorage::getActionPaneWidth() const
+{
+    return (ParameterStorage::instance->getScreenWidth() //
+    - 4 * MARGIN //
+    - ParameterStorage::instance->getPlaygroundWidth()) / 2;
+}
+
+uint ParameterStorage::getInfoPaneWidth() const
+{
+    return getActionPaneWidth();
 }
 
 void ParameterStorage::computeScreenSize()

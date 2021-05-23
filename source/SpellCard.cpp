@@ -269,7 +269,7 @@ bool SpellCard::execute() const
                         HeroQuestLevelWindow::_hero_quest->getLevel()->getCurrentlyActingCreature(), creature))
                 {
                     spell_card_used = true;
-                    HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::CAST_SPELL);
+                    HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::SOUND_CAST_SPELL);
                 }
             }
             if (door != 0)
@@ -281,7 +281,7 @@ bool SpellCard::execute() const
                 HeroQuestLevelWindow::_hero_quest->getPlayground()->setRoomVisible(door);
 
                 spell_card_used = true;
-                HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::CAST_SPELL);
+                HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::SOUND_CAST_SPELL);
             }
         }
             break;
@@ -297,7 +297,7 @@ bool SpellCard::execute() const
 
             HeroQuestLevelWindow::_hero_quest->updateHeroStatisticPane(hero);
 
-            HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::CAST_SPELL);
+            HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::SOUND_CAST_SPELL);
         }
             break;
         case STORM:
@@ -313,7 +313,7 @@ bool SpellCard::execute() const
             if (creature->isHero())
                 HeroQuestLevelWindow::_hero_quest->updateHeroStatisticPane(dynamic_cast<Hero*>(creature));
 
-            HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::CAST_SPELL);
+            HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::SOUND_CAST_SPELL);
         }
             break;
 
@@ -330,7 +330,7 @@ bool SpellCard::execute() const
 
             HeroQuestLevelWindow::_hero_quest->updateHeroStatisticPane(hero);
 
-            HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::CAST_SPELL);
+            HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::SOUND_CAST_SPELL);
         }
             break;
         case FOG:
@@ -343,7 +343,7 @@ bool SpellCard::execute() const
             HeroQuestLevelWindow::_hero_quest->getLevel()->getHeroActionStates(hero)->_may_cross_monsters_during_movement =
                     true;
 
-            HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::CAST_SPELL);
+            HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::SOUND_CAST_SPELL);
         }
             break;
         case MORPHEUS:
@@ -355,7 +355,7 @@ bool SpellCard::execute() const
 
             spell_card_used = true;
 
-            HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::CAST_SPELL);
+            HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::SOUND_CAST_SPELL);
             HeroQuestLevelWindow::_hero_quest->delay(Level::ATTACK_DELAY);
 
             // The attacked creature throws 1 defend die to defend the spell.
@@ -373,7 +373,7 @@ bool SpellCard::execute() const
                 creature_action_states->_sleeping = true;
                 if (creature->isHero())
                     HeroQuestLevelWindow::_hero_quest->updateHeroStatisticPane(dynamic_cast<Hero*>(creature));
-                HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::CAST_SPELL);
+                HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::SOUND_CAST_SPELL);
             }
             else
             {
@@ -395,7 +395,7 @@ bool SpellCard::execute() const
 
             HeroQuestLevelWindow::_hero_quest->updateHeroStatisticPane(hero);
 
-            HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::CAST_SPELL);
+            HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::SOUND_CAST_SPELL);
         }
             break;
         case THROUGH_WALL:
@@ -409,7 +409,7 @@ bool SpellCard::execute() const
 
             HeroQuestLevelWindow::_hero_quest->updateHeroStatisticPane(hero);
 
-            HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::CAST_SPELL);
+            HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::SOUND_CAST_SPELL);
         }
             break;
         case HEALING_MAGIC:
@@ -425,7 +425,7 @@ bool SpellCard::execute() const
             HeroQuestLevelWindow::_hero_quest->updateHeroStatisticPane(hero);
             HeroQuestLevelWindow::_hero_quest->getPlayground()->getQuestBoard()->computeReachableArea();
 
-            HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::CAST_SPELL);
+            HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::SOUND_CAST_SPELL);
         }
             break;
 
@@ -442,7 +442,7 @@ bool SpellCard::execute() const
 
             HeroQuestLevelWindow::_hero_quest->updateHeroStatisticPane(hero);
 
-            HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::CAST_SPELL);
+            HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::SOUND_CAST_SPELL);
         }
             break;
         case BURNING_RAGE:
@@ -452,7 +452,7 @@ bool SpellCard::execute() const
                 return false;
             DVX(("chosen creature for BURNING_RAGE: %s", qPrintable(creature->getName())));
 
-            HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::CAST_SPELL);
+            HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::SOUND_CAST_SPELL);
             if (!HeroQuestLevelWindow::_hero_quest->getLevel()->attackCreatureWithSkulls(
                     HeroQuestLevelWindow::_hero_quest->getLevel()->getCurrentlyActingCreature(), 1, creature))
                 return false;
@@ -470,7 +470,7 @@ bool SpellCard::execute() const
                 return false;
             DVX(("chosen creature for FIREBALL: %s", qPrintable(creature->getName())));
 
-            HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::CAST_SPELL);
+            HeroQuestLevelWindow::_hero_quest->playSoundOnce(SoundManager::SOUND_CAST_SPELL);
             if (!HeroQuestLevelWindow::_hero_quest->getLevel()->attackCreatureWithSkulls(
                     HeroQuestLevelWindow::_hero_quest->getLevel()->getCurrentlyActingCreature(), 2, creature, 2))
                 return false;

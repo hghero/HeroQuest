@@ -41,6 +41,7 @@
 #include "GameState.h"
 #include "Command.h"
 #include "Level01TheProbation.h"
+#include "Level02SavingSirRagnar.h"
 #include "HeroCamp.h"
 #include "SpellCardStorage.h"
 #include "TreasureCardStorage.h"
@@ -48,6 +49,8 @@
 #include "ParameterStorage.h"
 #include "EquipmentCardStorage.h"
 #include "Trap.h"
+
+#define DEBUG_PANE_SIZES
 
 using namespace std;
 
@@ -108,6 +111,7 @@ HeroQuestLevelWindow::HeroQuestLevelWindow(
     _dice_roll_pane(0),
     _button_pane(0),
     _playground(0),
+    _info_pane_wrapper(0),
     _info_pane(0),
     _hero_statistic_panes(),
     _sound_manager(0), //
@@ -150,7 +154,6 @@ HeroQuestLevelWindow::HeroQuestLevelWindow(
 
     _sound_manager = new SoundManager;
 
-    // creates a level thread which manages the gameplay
     startGame(filename);
 
     showMaximized();
@@ -177,17 +180,15 @@ void HeroQuestLevelWindow::createGUIElements()
      * layout:
      *
      *  -------------------------------------------------
+     * |  action   |     playground      |     info      |
      * |           |                     |               |
      * |           |                     |               |
      * |           |                     |               |
-     * | action    |     playground      |     info      |
      * |           |                     |               |
      * |           |                     |               |
      * |           |                     |               |
      *  -------------------------------------------------
      */
-
-    const int margin = 5;
 
     // central widget
     QWidget* central_widget = new QWidget(this);
@@ -211,16 +212,13 @@ void HeroQuestLevelWindow::createGUIElements()
     _playground_pane->setFrameStyle(QFrame::Panel | QFrame::Sunken);
     _playground_pane->setStyleSheet("color: rgb(255,0,0) ; border: 1px solid #00ff00 ;");
 #endif
-    int action_pane_width = (ParameterStorage::instance->getScreenWidth() - 6 * margin
-            - ParameterStorage::instance->getPlaygroundWidth()) / 2;
-    int info_pane_width = action_pane_width;
 
     // stretch
     central_widget_layout->addStretch();
 
     // action pane (top: DiceRollPane; middle: ButtonPane; bottom: HintPane)
     _action_pane = new QLabel(central_widget);
-    _action_pane->setFixedWidth(action_pane_width);
+    _action_pane->setFixedWidth(ParameterStorage::instance->getActionPaneWidth());
     central_widget_layout->addWidget(_action_pane);
 #if 0
     _action_pane->setFrameStyle(QFrame::Panel | QFrame::Sunken);
@@ -229,7 +227,8 @@ void HeroQuestLevelWindow::createGUIElements()
     QVBoxLayout* action_pane_layout = new QVBoxLayout;
     _action_pane->setLayout(action_pane_layout);
     action_pane_layout->setMargin(0);
-    _dice_roll_pane = new DiceRollPane(action_pane_width, ParameterStorage::instance->getFieldSize());
+    _dice_roll_pane = new DiceRollPane(ParameterStorage::instance->getActionPaneWidth(),
+            ParameterStorage::instance->getFieldSize());
     action_pane_layout->addStretch(); // test
     action_pane_layout->addWidget(_dice_roll_pane);
     _button_pane = new ButtonPane();
@@ -267,10 +266,62 @@ void HeroQuestLevelWindow::createGUIElements()
     // stretch
     central_widget_layout->addStretch();
 
+    addInfoPaneToCentralWidget();
+
+    // stretch
+    central_widget_layout->addStretch();
+
+    adjustSize();
+
+#ifdef DEBUG_PANE_SIZES
+    DVX(("========================================="));
+    DVX(("HeroQuestLevelWindow::createGuiElements()"));
+    DVX(("-----------------------------------------"));
+    DVX(("screen_width = %d", ParameterStorage::instance->getScreenWidth()));
+    DVX(("action_pane_width = %d (actual %d)", ParameterStorage::instance->getActionPaneWidth(), _action_pane->width()));
+    DVX(("playground_width = %d (actual %d)", ParameterStorage::instance->getPlaygroundWidth(), _playground->width()));
+    DVX(("playground_height = %d", _playground->height()));
+    DVX(("info_pane_wrapper width x height = %d x %d", _info_pane_wrapper->width(), _info_pane_wrapper->height()));
+    DVX(("info_pane_width = %d (actual %d)", ParameterStorage::instance->getInfoPaneWidth(), _info_pane->width()));
+    DVX(("_info_pane width x height = %d x %d", _info_pane->width(), _info_pane->height()));
+#endif
+
+    connectActionButtons();
+}
+
+void HeroQuestLevelWindow::addInfoPaneToCentralWidget()
+{
+    removeHeroStatisticPanes();
+    delete _info_pane_wrapper;
+    QWidget* central_widget = centralWidget();
+
+    // =========
+    // info pane
+    // =========
+    //
+    //  -------- info_pane_wrapper                                             : fixed:info_pane_width x fixed:playground_height ------
+    // |                                                                                                                               |
+    // |   ----- scroll_area (parent: info_pane_wrapper)                       : fixed:info_pane_width x fixed:playground_height ---   |
+    // |  |                                                                                                                         |  |
+    // |  |   -- _info_pane (parent: info_pane_wrapper; widget of scroll_area) : variable size, depending on contained panes ----   |  |
+    // |  |  |                                                                                                                   |  |  |
+    // |  |  |                                                                                                                   |  |  |
+    // |  |  |                                                                                                                   |  |  |
+    // |  |  |                                                                                                                   |  |  |
+    // |  |  |                                                                                                                   |  |  |
+    // |  |  |                                                                                                                   |  |  |
+    // |  |  |                                                                                                                   |  |  |
+    // |  |  |                                                                                                                   |  |  |
+    // |  |  |                                                                                                                   |  |  |
+    // |  |   -------------------------------------------------------------------------------------------------------------------   |  |
+    // |  |                                                                                                                         |  |
+    // |   -------------------------------------------------------------------------------------------------------------------------   |
+    // |                                                                                                                               |
+    //  -------------------------------------------------------------------------------------------------------------------------------
+
     // info pane: info_pane_wrapper => scroll_area => _info_pane
-    QLabel* info_pane_wrapper = new QLabel(central_widget);
-    _info_pane = new QLabel(info_pane_wrapper);
-    _info_pane->setFixedSize(info_pane_width, ParameterStorage::instance->getScreenHeight());
+    _info_pane_wrapper = new QLabel(central_widget);
+    _info_pane = new QLabel(_info_pane_wrapper);
     QVBoxLayout* info_pane_layout = new QVBoxLayout;
     _info_pane->setLayout(info_pane_layout);
     info_pane_layout->setMargin(0);
@@ -278,28 +329,15 @@ void HeroQuestLevelWindow::createGUIElements()
     _info_pane->setFrameStyle(QFrame::Panel | QFrame::Sunken);
     _info_pane->setStyleSheet("color: rgb(255,0,0) ; border: 1px solid #ff0000 ;");
 #endif
-    info_pane_wrapper->setFixedSize(info_pane_width, ParameterStorage::instance->getPlaygroundHeight());
-    QScrollArea* scroll_area = new QScrollArea(info_pane_wrapper);
+    _info_pane_wrapper->setFixedSize(ParameterStorage::instance->getInfoPaneWidth(),
+            ParameterStorage::instance->getPlaygroundHeight());
+    QScrollArea* scroll_area = new QScrollArea(_info_pane_wrapper);
     {
-        scroll_area->setFixedSize(info_pane_width, ParameterStorage::instance->getPlaygroundHeight());
+        scroll_area->setFixedSize(ParameterStorage::instance->getInfoPaneWidth(),
+                ParameterStorage::instance->getPlaygroundHeight());
         scroll_area->setWidget(_info_pane);
     }
-    central_widget_layout->addWidget(info_pane_wrapper);
-
-    // stretch
-    central_widget_layout->addStretch();
-
-    adjustSize();
-
-#if 0
-    DVX(("screen_width = %d", screen_width));
-    DVX(("action_pane_width = %d (actual %d)", action_pane_width, _action_pane->width()));
-    DVX(("playground_width = %d (actual %d)", playground_width, _playground->width()));
-    DVX(("playground_height = %d", _playground->height()));
-    DVX(("info_pane_width = %d (actual %d)", info_pane_width, _info_pane->width()));
-#endif
-
-    connectActionButtons();
+    central_widget->layout()->addWidget(_info_pane_wrapper);
 }
 
 /*!
@@ -500,10 +538,21 @@ void HeroQuestLevelWindow::playSoundOnce(QVariant sound_id)
     _sound_manager->playSoundOnce(SoundManager::SoundID(sound_id_uint));
 }
 
-void HeroQuestLevelWindow::removeHeroStatisticPane(Hero* hero)
+void HeroQuestLevelWindow::removeHeroStatisticPanes()
+{
+    for (vector<HeroStatisticPane*>::iterator it = _hero_statistic_panes.begin(); it != _hero_statistic_panes.end();
+            ++it)
+    {
+        removeHeroStatisticPane((*it)->getHero());
+    }
+    _hero_statistic_panes.clear();
+}
+
+void HeroQuestLevelWindow::removeHeroStatisticPane(const Hero* hero)
 {
     HeroStatisticPane* hero_statistic_pane = 0;
     vector<HeroStatisticPane*>::iterator it;
+    size_t index = 0;
     for (it = _hero_statistic_panes.begin(); it != _hero_statistic_panes.end(); ++it)
     {
         if ((*it)->getHero() == hero)
@@ -511,6 +560,7 @@ void HeroQuestLevelWindow::removeHeroStatisticPane(Hero* hero)
             hero_statistic_pane = *it;
             break;
         }
+        ++index;
     }
     if (hero_statistic_pane == 0)
     {
@@ -518,11 +568,25 @@ void HeroQuestLevelWindow::removeHeroStatisticPane(Hero* hero)
         return;
     }
 
-    _info_pane->layout()->removeWidget(hero_statistic_pane);
-    LayoutHelper::removeUselessStretches(_info_pane->layout());
+#ifdef DEBUG_PANE_SIZES
+    DVX(("================================================="));
+    DVX(("removeHeroStatisticPane(%s)", qPrintable(hero->getName())));
+    DVX(("-------------------------------------------------"));
+    DVX(("_info_pane->layout() content before remove = %d", LayoutHelper::getNumWidgets(_info_pane->layout())));
+#endif
+
+    int layout_index = index * 2;
+    _info_pane->layout()->removeItem(_info_pane->layout()->itemAt(layout_index + 1)); // space below statistic pane
+    _info_pane->layout()->removeItem(_info_pane->layout()->itemAt(layout_index)); // statistic pane
 
     _hero_statistic_panes.erase(it);
     delete hero_statistic_pane;
+
+    adjustInfoPaneHeight();
+
+#ifdef DEBUG_PANE_SIZES
+    DVX(("_info_pane->layout() content after remove = %d", LayoutHelper::getNumWidgets(_info_pane->layout())));
+#endif
 }
 
 void HeroQuestLevelWindow::startHeroTurn()
@@ -820,6 +884,8 @@ bool HeroQuestLevelWindow::loadGame()
  */
 bool HeroQuestLevelWindow::loadGame(const QString& filename)
 {
+    DVX(("loadGame %s", qPrintable(filename)));
+
     QString filename_local = filename;
     if (filename_local.length() == 0)
     {
@@ -869,6 +935,7 @@ bool HeroQuestLevelWindow::loadGame(const QString& filename)
         _hero_camp.getHeroes(&_heroes);
 
         // hero static panes
+        addInfoPaneToCentralWidget();
         addHeroStatisticPanes();
 
         if (!load(infile))
@@ -907,6 +974,10 @@ Level* HeroQuestLevelWindow::createLevelFromLevelID(GameState::LevelID level_id,
     if (level_id == GameState::LEVEL_THE_PROBATION)
     {
         level = new Level01TheProbation(num_heroes);
+    }
+    else if (level_id == GameState::LEVEL_SAVING_SIR_RAGNAR)
+    {
+        level = new Level02SavingSirRagnar(num_heroes);
     }
     else
     {
@@ -1705,6 +1776,11 @@ void HeroQuestLevelWindow::startGame(const QString& filename)
  */
 void HeroQuestLevelWindow::addHeroStatisticPanes()
 {
+#ifdef DEBUG_PANE_SIZES
+    DVX(
+            ("addHeroStatisticPanes _info_pane->layout() content before clear = %d", LayoutHelper::getNumWidgets(_info_pane->layout())));
+#endif
+    
     // clean internal data structures and GUI
     QVBoxLayout* info_pane_layout = dynamic_cast<QVBoxLayout*>(_info_pane->layout());
     while (info_pane_layout->itemAt(0) != 0)
@@ -1718,30 +1794,24 @@ void HeroQuestLevelWindow::addHeroStatisticPanes()
     }
     _hero_statistic_panes.clear();
 
-    // --- add statistic panes to the info area ---
+#ifdef DEBUG_PANE_SIZES
+    DVX(
+            ("addHeroStatisticPanes _info_pane->layout() content after clear = %d", LayoutHelper::getNumWidgets(_info_pane->layout())));
+#endif
 
-    // top stretch
-    if (info_pane_layout != 0)
-        info_pane_layout->addStretch();
-    for (size_t i = 0; i < _heroes.size(); ++i)
+    // --- add statistic panes to the info area ---
+    for (size_t i = 0; i < getHeroes().size(); ++i) // cannot use _level->getActingHeroes() here, because the level doesn't exist yet
     {
-        Hero* hero = _heroes[i];
+        Hero* hero = getHeroes()[i];
 
         addHeroStatisticPane(hero);
-
-        // spacing
-        if (info_pane_layout != 0 && i < _heroes.size() - 1)
-        {
-            info_pane_layout->addSpacing(10);
-        }
     }
-    // bottom stretch
-    if (info_pane_layout != 0)
-        info_pane_layout->addStretch();
 
-#if 0
-    string test;
-    cin >> test;
+    adjustInfoPaneHeight();
+
+#ifdef DEBUG_PANE_SIZES
+    DVX(
+            ("addHeroStatisticPanes _info_pane->layout() content after add heroes = %d", LayoutHelper::getNumWidgets(_info_pane->layout())));
 #endif
 }
 
@@ -1753,9 +1823,29 @@ void HeroQuestLevelWindow::connectActionButtons()
     connect(HeroQuestLevelWindow::_hero_quest->getButtonPane()->getButton("End Turn"), SIGNAL(clicked()), this, SLOT(endTurnButtonClicked()));
 }
 
+/*!
+ * Sets fixed height of _info_pane according to the height of the contained HeroStatisticPanes.
+ */
+void HeroQuestLevelWindow::adjustInfoPaneHeight(QSize fixed_size)
+{
+    if (fixed_size.width() == 0 || fixed_size.height() == 0)
+    {
+        fixed_size = _info_pane->layout()->sizeHint();
+    }
+
+    _info_pane->setFixedSize(fixed_size);
+
+#ifdef DEBUG_PANE_SIZES
+    DVX(("============================================"));
+    DVX(
+            ("adjustInfoPaneHeight: _info_pane->layout()->sizeHint: %d x %d", _info_pane->layout()->sizeHint().width(), _info_pane->layout()->sizeHint().height()));
+#endif
+}
+
 void HeroQuestLevelWindow::exitLevelFinished()
 {
     DVX(("Level finished successfully!"));
+    _level->obtainLevelReward();
     _level->cleanupGameMaterialOnLevelFinish();
     _app.exit(EXIT_CODE_LEVEL_FINISHED);
 }
@@ -1819,13 +1909,68 @@ void HeroQuestLevelWindow::inventoryButtonClicked()
     execDialogInventory();
 }
 
+/*!
+ * Adds a new statistic pane for hero at the end.
+ *
+ * @param hero
+ */
 void HeroQuestLevelWindow::addHeroStatisticPane(Hero* hero)
 {
+    size_t index = _hero_statistic_panes.size();
+    insertHeroStatisticPane(hero, index);
+}
+
+/*!
+ * Inserts a new HeroStatisticPane for hero at logical position index. (There are 4 logical positions in the case of 4 heroes.)
+ *
+ * @param hero
+ * @param index index of _hero_statistic_panes
+ * @param extrapolate_info_pane_size if true, the fixed size of the _info_pane will be extrapolated, because the layout's sizeHint is wrong :-(
+ */
+void HeroQuestLevelWindow::insertHeroStatisticPane(Hero* hero, size_t index, bool extrapolate_info_pane_size)
+{
+    DVX(("insertHeroStatisticPane for %s at index %d", qPrintable(hero->getName()), index));
+
+    QSize fixed_size(0, 0);
+    if (extrapolate_info_pane_size)
+    {
+        // bad workaround, needed because layout->sizeHint is wrong after having added sir ragnar in level 2 :-(
+        QSize current_size_hint = _info_pane->layout()->sizeHint();
+        int current_num_statistic_panes = _hero_statistic_panes.size();
+        fixed_size = QSize(current_size_hint.width(),
+                current_size_hint.height() / current_num_statistic_panes * (current_num_statistic_panes + 1));
+    }
+
+    // insert into _hero_statistic_panes
+    vector<HeroStatisticPane*>::iterator it_hero_statistic_pane = _hero_statistic_panes.begin();
+    for (size_t i = 0; i < index; ++i)
+    {
+        ++it_hero_statistic_pane;
+    }
     HeroStatisticPane* hero_statistic_pane = new HeroStatisticPane(hero);
-    _hero_statistic_panes.push_back(hero_statistic_pane);
-    _info_pane->layout()->addWidget(hero_statistic_pane);
-    dynamic_cast<QBoxLayout*>(_info_pane->layout())->addStretch();
+    _hero_statistic_panes.insert(it_hero_statistic_pane, hero_statistic_pane);
+
+    // insert into layout
+    QVBoxLayout* info_pane_layout = dynamic_cast<QVBoxLayout*>(_info_pane->layout());
+    int layout_index = 2 * (int) index; // [hero0, hero1, ...] => [hero0Pane, space0, hero1Pane, space1, ...]
+
+    // insert hero pane
+    info_pane_layout->insertWidget(layout_index, hero_statistic_pane);
     connect(hero_statistic_pane->getInventoryButton(), SIGNAL(clicked()), this, SLOT(inventoryButtonClicked()));
+
+    // insert spacing
+    info_pane_layout->insertSpacing(layout_index + 1, 10);
+
+    adjustInfoPaneHeight(fixed_size);
+
+#ifdef DEBUG_PANE_SIZES
+    DVX(("========================================================"));
+    DVX(("HeroQuestLevelWindow::addHeroStatisticPane (%s)", qPrintable(hero->getName())));
+    DVX(("--------------------------------------------------------"));
+    DVX(("hero_statistic_pane width x height = %d x %d", hero_statistic_pane->width(), hero_statistic_pane->height()));
+    DVX(
+            ("_info_pane->layout() sizeHint = %d x %d", _info_pane->layout()->sizeHint().width(), _info_pane->layout()->sizeHint().height()));
+#endif
 }
 
 bool HeroQuestLevelWindow::isPainting() const
