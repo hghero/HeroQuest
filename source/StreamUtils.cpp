@@ -64,32 +64,6 @@ bool StreamUtils::read(istream& stream, list<QString>* str_list)
     return !stream.fail();
 }
 
-bool StreamUtils::write(std::ostream& stream, const list<NodeID>& node_ids)
-{
-    writeUInt(stream, node_ids.size());
-    for (list<NodeID>::const_iterator it = node_ids.begin(); it != node_ids.end(); ++it)
-    {
-        it->save(stream);
-    }
-
-    return !stream.fail();
-}
-
-bool StreamUtils::read(std::istream& stream, list<NodeID>* node_ids)
-{
-    uint node_ids_size;
-    readUInt(stream, &node_ids_size);
-    for (uint i = 0; i < node_ids_size; ++i)
-    {
-        NodeID node_id;
-        node_id.load(stream);
-
-        node_ids->push_back(node_id);
-    }
-
-    return !stream.fail();
-}
-
 bool StreamUtils::writeUInt(std::ostream& stream, uint value)
 {
     stream.write((char*)&value, sizeof(value));

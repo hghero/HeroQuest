@@ -7,6 +7,8 @@
 
 #include "StreamUtils.h"
 #include "Debug.h"
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 using namespace std;
 
@@ -167,12 +169,14 @@ QPixmap* EquipmentCardStorage::getEquipmentCardImage(const EquipmentCard::Equipm
     return it->second;
 }
 
-bool EquipmentCardStorage::save(ostream& stream) const
+bool EquipmentCardStorage::save(SaveContext& save_context) const
 {
-    StreamUtils::writeUInt(stream, _equipment_card_stock.size());
+    SaveContext::OpenChapter open_chapter(save_context, "EquipmentCardStorage");
+
+    save_context.writeUInt(_equipment_card_stock.size(), "_equipment_card_stock.size()");
     for (uint i = 0; i < _equipment_card_stock.size(); ++i)
     {
-        if (!_equipment_card_stock[i].save(stream))
+        if (!_equipment_card_stock[i].save(save_context))
         {
             DVX(("Error saving card %d from equipment card stock!", i));
             return false;
@@ -182,15 +186,17 @@ bool EquipmentCardStorage::save(ostream& stream) const
     return true;
 }
 
-bool EquipmentCardStorage::load(istream& stream)
+bool EquipmentCardStorage::load(LoadContext& load_context)
 {
+    LoadContext::OpenChapter open_chapter(load_context, "EquipmentCardStorage");
+
     _equipment_card_stock.clear();
     uint num_equipment_cards_stock;
-    StreamUtils::readUInt(stream, &num_equipment_cards_stock);
+    load_context.readUInt(&num_equipment_cards_stock, "_equipment_card_stock.size()");
     for (uint i = 0; i < num_equipment_cards_stock; ++i)
     {
         EquipmentCard equipment_card;
-        if (!equipment_card.load(stream))
+        if (!equipment_card.load(load_context))
         {
             DVX(("Error loading equipment card %d to equipment card stock!", i));
             return false;

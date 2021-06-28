@@ -7,6 +7,8 @@
 
 class QuestBoard;
 class QPainter;
+class SaveContext;
+class LoadContext;
 
 // =============================================================================
 
@@ -29,8 +31,8 @@ public:
 
     static QString getName(const Trap* trap);
 
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
 
 protected:
 	bool _visible;
@@ -55,8 +57,8 @@ public:
 
 	virtual bool isSpearTrap() const;
 
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
 };
 
 // =============================================================================
@@ -74,8 +76,8 @@ public:
 
 	virtual bool isSpearTrap() const;
 
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
 
 private:
 	QTime _redraw_start_time;

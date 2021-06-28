@@ -6,9 +6,10 @@
 
 #include "HeroQuestLevelWindow.h"
 #include "StreamUtils.h"
-
 #include "Debug.h"
 #include "Level.h"
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 using namespace std;
 
@@ -99,28 +100,32 @@ QString Monster::getName(const Monster* monster)
     return monster_name;
 }
 
-bool Monster::save(ostream& stream) const
+bool Monster::save(SaveContext& save_context) const
 {
-    Parent::save(stream);
+    SaveContext::OpenChapter open_chapter(save_context, "Monster");
+
+    Parent::save(save_context);
 
     // movement
-    StreamUtils::writeInt(stream, _num_move_points);
+    save_context.writeInt(_num_move_points, "_num_move_points");
 
     DV(("saved monster with ref id %d", getReferencingID()));
 
-    return !stream.fail();
+    return !save_context.fail();
 }
 
-bool Monster::load(istream& stream)
+bool Monster::load(LoadContext& load_context)
 {
-    Parent::load(stream);
+    LoadContext::OpenChapter open_chapter(load_context, "Monster");
+
+    Parent::load(load_context);
 
     // movement
-    StreamUtils::readInt(stream, &_num_move_points);
+    load_context.readInt(&_num_move_points, "_num_move_points");
 
     DV(("loaded monster with ref id %d", getReferencingID()));
 
-    return !stream.fail();
+    return !load_context.fail();
 }
 
 // ==================================

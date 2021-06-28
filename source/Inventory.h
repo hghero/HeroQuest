@@ -9,6 +9,8 @@
 #include "TreasureDataTypes.h"
 #include "EquipmentCard.h"
 
+class SaveContext;
+class LoadContext;
 
 /*!
  * A hero's inventory (e.g. weapons, gold, treasure cards, spells).
@@ -89,8 +91,8 @@ public:
 	size_t size() const;
 	bool empty() const;
 
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
 
     void updateTreasureImages();
 

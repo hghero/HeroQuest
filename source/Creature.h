@@ -7,6 +7,9 @@
 #include "Math.h"
 #include "Reference.h"
 
+class SaveContext;
+class LoadContext;
+
 // ==================================================================
 
 class Creature : public Reference
@@ -56,8 +59,8 @@ public:
 	virtual Creature& operator=(const Creature& other);
 	virtual Creature* copy() const;
 
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
 
 protected:
 	bool _created;

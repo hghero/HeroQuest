@@ -7,6 +7,8 @@
 #include "QuestBoard.h"
 #include "Debug.h"
 #include "StreamUtils.h"
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 using namespace std;
 
@@ -147,15 +149,14 @@ void Level02SavingSirRagnar::createChestTreasureDescriptions()
     // chest A
     TreasureDescription chest_a;
     chest_a.setID("chest_A");
-    chest_a.setAmount(100);
     chest_a.setText("This chest contains a trap only.");
     chest_a.addActionString("LIFE_POINTS <-1>");
+    chest_a.addActionString("GOLD <100>");
     _chest_pos_to_treasure_description[NodeID(2, 13)] = chest_a;
 
     // chest B
     TreasureDescription chest_b;
     chest_b.setID("chest_B");
-    chest_b.setAmount(50);
     chest_b.setText(
             "This chest contains 50 gold pieces and a healing potion which instantly recovers up to 4 life points.");
     chest_b.addActionString("GOLD <50>");
@@ -172,25 +173,27 @@ QString Level02SavingSirRagnar::getLevelBriefing() const
             "the escape.</description>";
 }
 
-bool Level02SavingSirRagnar::save(ostream& stream) const
+bool Level02SavingSirRagnar::save(SaveContext& save_context) const
 {
-    Level::save(stream);
+    Level::save(save_context);
 
-    StreamUtils::writeUInt(stream, (uint) _level_completion_state);
+    save_context.writeUInt((uint) _level_completion_state, "_level_completion_state");
 
-    return !stream.fail();
+    return !save_context.fail();
 }
 
-bool Level02SavingSirRagnar::load(istream& stream)
+bool Level02SavingSirRagnar::load(LoadContext& load_context)
 {
-    Level::load(stream);
+    LoadContext::OpenChapter open_chapter(load_context, "Level02SavingSirRagnar");
+
+    Level::load(load_context);
 
     // _level_completion_state
     uint level_completion_state_uint;
-    StreamUtils::readUInt(stream, &level_completion_state_uint);
+    load_context.readUInt(&level_completion_state_uint, "_level_completion_state");
     _level_completion_state = (LevelCompletionState) level_completion_state_uint;
 
-    return !stream.fail();
+    return !load_context.fail();
 }
 
 

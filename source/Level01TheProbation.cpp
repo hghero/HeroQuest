@@ -175,7 +175,7 @@ void Level01TheProbation::createChestTreasureDescriptions()
     // chest A
     TreasureDescription chest_a;
     chest_a.setID("chest_A");
-    chest_a.setAmount(100);
+    chest_a.addActionString("GOLD <100>");
     chest_a.setText("In the chest you find 100 gold coins!");
     // no actions
     _chest_pos_to_treasure_description[NodeID(1, 1)] = chest_a;
@@ -183,7 +183,7 @@ void Level01TheProbation::createChestTreasureDescriptions()
     // chest C
     TreasureDescription chest_c;
     chest_c.setID("chest_C");
-    chest_c.setAmount(150);
+    chest_c.addActionString("GOLD <150>");
     chest_c.setText("In the chest you find 150 gold coins!");
     // no actions
     _chest_pos_to_treasure_description[NodeID(10, 5)] = chest_c;
@@ -191,7 +191,6 @@ void Level01TheProbation::createChestTreasureDescriptions()
     // chest D
     TreasureDescription chest_d;
     chest_d.setID("chest_D");
-    chest_d.setAmount(0);
     chest_d.setText("This chest is empty.");
     // no actions
     _chest_pos_to_treasure_description[NodeID(9, 17)] = chest_d;

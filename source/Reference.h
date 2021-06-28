@@ -4,6 +4,9 @@
 #include "ThreadUtils.h"
 #include <iostream>
 
+class SaveContext;
+class LoadContext;
+
 class ReferenceManager
 {
     public:
@@ -33,8 +36,8 @@ class Reference
 
     uint getReferencingID() const;
 
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
 
     private:
     uint _referencing_id;

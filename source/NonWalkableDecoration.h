@@ -3,6 +3,9 @@
 
 #include "Decoration.h"
 
+class SaveContext;
+class LoadContext;
+
 // =============================================================================
 
 class NonWalkableDecoration: public Decoration
@@ -18,8 +21,8 @@ public:
 
 	virtual bool isWalkable() const;
 
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
 };
 
 // =============================================================================
@@ -39,8 +42,8 @@ public:
     bool isOpen() const;
     void setOpen(bool value);
 
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
 
     private:
     bool _open;

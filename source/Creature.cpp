@@ -6,6 +6,8 @@
 #include "StreamUtils.h"
 #include "Debug.h"
 #include "PainterContext.h"
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 using namespace std;
 
@@ -237,26 +239,28 @@ Creature* Creature::copy() const
 	return 0;
 }
 
-bool Creature::save(ostream& stream) const
+bool Creature::save(SaveContext& save_context) const
 {
-    Reference::save(stream);
+    SaveContext::OpenChapter open_chapter(save_context, "Creature");
 
-    StreamUtils::writeBool(stream, _created);
+    Reference::save(save_context);
+
+    save_context.writeBool(_created, "_created");
 
     // name of the creature
-    StreamUtils::write(stream, _name);
+    save_context.writeString(_name, "_name");
 
     // fighting
-    StreamUtils::writeInt(stream, _num_dice_attack);
-    StreamUtils::writeInt(stream, _num_dice_defend);
+    save_context.writeInt(_num_dice_attack, "_num_dice_attack");
+    save_context.writeInt(_num_dice_defend, "_num_dice_defend");
 
     // life and intelligence
-    StreamUtils::writeInt(stream, _life_points);
-    StreamUtils::writeInt(stream, _life_points_max);
-    StreamUtils::writeInt(stream, _intelligence_points);
+    save_context.writeInt(_life_points, "_life_points");
+    save_context.writeInt(_life_points_max, "_life_points_max");
+    save_context.writeInt(_intelligence_points, "_intelligence_points");
 
     // round behaviour
-    StreamUtils::writeUInt(stream, _skip_rounds);
+    save_context.writeUInt(_skip_rounds, "_skip_rounds");
 
     // the creature icon
     // => is restored from program context
@@ -264,32 +268,34 @@ bool Creature::save(ostream& stream) const
     //int _creature_icon_orig_size_x;
     //int _creature_icon_orig_size_y;
 
-    return !stream.fail();
+    return !save_context.fail();
 }
 
-bool Creature::load(istream& stream)
+bool Creature::load(LoadContext& load_context)
 {
-    Reference::load(stream);
+    LoadContext::OpenChapter open_chapter(load_context, "Creature");
 
-    StreamUtils::readBool(stream, &_created);
+    Reference::load(load_context);
+
+    load_context.readBool(&_created, "_created");
 
     // name of the creature
-    StreamUtils::read(stream, &_name);
+    load_context.readString(&_name, "_name");
 
     // fighting
-    StreamUtils::readInt(stream, &_num_dice_attack);
-    StreamUtils::readInt(stream, &_num_dice_defend);
+    load_context.readInt(&_num_dice_attack, "_num_dice_attack");
+    load_context.readInt(&_num_dice_defend, "_num_dice_defend");
 
     // life and intelligence
-    StreamUtils::readInt(stream, &_life_points);
-    StreamUtils::readInt(stream, &_life_points_max);
-    StreamUtils::readInt(stream, &_intelligence_points);
+    load_context.readInt(&_life_points, "_life_points");
+    load_context.readInt(&_life_points_max, "_life_points_max");
+    load_context.readInt(&_intelligence_points, "_intelligence_points");
 
     // round behaviour
-    StreamUtils::readUInt(stream, &_skip_rounds);
+    load_context.readUInt(&_skip_rounds, "_skip_rounds");
 
     // the creature icon is restored from program context via ::create
     create();
 
-    return !stream.fail();
+    return !load_context.fail();
 }

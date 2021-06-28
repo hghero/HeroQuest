@@ -4,6 +4,9 @@
 #include <vector>
 #include <iostream>
 
+class SaveContext;
+class LoadContext;
+
 // ===============================================
 
 /*!
@@ -27,8 +30,8 @@ public:
 	static unsigned int numArgsSerialized();
 	void serialize(std::vector<void*>* target) const;
 	
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
 
 public:
 	int _ix;
@@ -71,8 +74,8 @@ public:
 	bool isNeighbor(const NodeID& node_id) const;
     bool hasCommonNeighborWith(const Node& other_node) const;
 
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
 
 private:
 	// board matrix indices (0..width-1) x (0..height-1)

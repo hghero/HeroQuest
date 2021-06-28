@@ -12,6 +12,8 @@
 #include "Debug.h"
 #include "TreasureCardStorage.h"
 #include "Level.h"
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 using namespace std;
 
@@ -445,30 +447,34 @@ bool TreasureDescription::getInventoryItems(vector<QString>* items) const
 	return getInventoryItemsInternal(items);
 }
 
-bool TreasureDescription::save(std::ostream& stream) const
+bool TreasureDescription::save(SaveContext& save_context) const
 {
-    StreamUtils::write(stream, _id);
+    SaveContext::OpenChapter open_chapter(save_context, "TreasureDescription");
+
+    save_context.writeString(_id, "_id");
     //QPixmap* _treasure_image; // stored in Playground
-    StreamUtils::writeUInt(stream, _amount);
-    StreamUtils::writeUInt(stream, uint(_image_id));
-    StreamUtils::write(stream, _text);
-    StreamUtils::write(stream, _actions);
-    return !stream.fail();
+    save_context.writeUInt(_amount, "_amount");
+    save_context.writeUInt(uint(_image_id), "_image_id");
+    save_context.writeString(_text, "_text");
+    save_context.writeStrings(_actions, "_actions");
+    return !save_context.fail();
 }
 
-bool TreasureDescription::load(std::istream& stream)
+bool TreasureDescription::load(LoadContext& load_context)
 {
-    StreamUtils::read(stream, &_id);
+    LoadContext::OpenChapter open_chapter(load_context, "TreasureDescription");
+
+    load_context.readString(&_id, "_id");
     // _treasure_image is assigned later, see loadImagesAndAdjustPointers
-    StreamUtils::readUInt(stream, &_amount);
+    load_context.readUInt(&_amount, "_amount");
 
     uint tmp_id;
-    StreamUtils::readUInt(stream, &tmp_id);
+    load_context.readUInt(&tmp_id, "_image_id");
     _image_id = (TreasureDataTypes::TreasureImageID) (tmp_id);
 
-    StreamUtils::read(stream, &_text);
-    StreamUtils::read(stream, &_actions);
-    return !stream.fail();
+    load_context.readString(&_text, "_text");
+    load_context.readStrings(&_actions, "_actions");
+    return !load_context.fail();
 }
 
 void TreasureDescription::updateTreasureImage()
@@ -485,6 +491,7 @@ void TreasureDescription::disarmTraps()
     bool erased = true;
     while (erased)
     {
+        erased = false;
         for (list<QString>::iterator it = _actions.begin(); it != _actions.end(); ++it)
         {
             QString& str = *it;

@@ -9,6 +9,8 @@
 #include "Debug.h"
 #include "Hero.h"
 #include "EquipmentCardStorage.h"
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 using namespace std;
 
@@ -455,24 +457,24 @@ QPixmap* EquipmentCard::getImage() const
     return EquipmentCardStorage::instance->getEquipmentCardImage(_equipment_id);
 }
 
-bool EquipmentCard::save(std::ostream& stream) const
+bool EquipmentCard::save(SaveContext& save_context) const
 {
-    Parent::save(stream);
+    Parent::save(save_context);
 
-    StreamUtils::writeUInt(stream, uint(_equipment_id));
+    save_context.writeUInt(uint(_equipment_id), "_equipment_id");
 
-    return !stream.fail();
+    return !save_context.fail();
 }
 
-bool EquipmentCard::load(std::istream& stream)
+bool EquipmentCard::load(LoadContext& load_context)
 {
-    Parent::load(stream);
+    Parent::load(load_context);
 
     uint equipment_id_uint = 0;
-    StreamUtils::readUInt(stream, &equipment_id_uint);
+    load_context.readUInt(&equipment_id_uint, "_equipment_id");
     _equipment_id = EquipmentID(equipment_id_uint);
 
-    return !stream.fail();
+    return !load_context.fail();
 }
 
 int EquipmentCard::getNumAttackDiceForRegularAttack() const

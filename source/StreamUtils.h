@@ -20,7 +20,6 @@ public:
 
 	static bool write(std::ostream& stream, const QString& str);
 	static bool write(std::ostream& stream, const std::list<QString>& str_list);
-	static bool write(std::ostream& stream, const std::list<NodeID>& node_ids);
 	static bool writeUInt(std::ostream& stream, uint value);
 	static bool writeInt(std::ostream& stream, int value);
 	static bool writeUChar(std::ostream& stream, unsigned char value);
@@ -28,7 +27,6 @@ public:
 
 	static bool read(std::istream& stream, QString* str);
 	static bool read(std::istream& stream, std::list<QString>* str_list);
-	static bool read(std::istream& stream, std::list<NodeID>* node_ids);
 	static bool readUInt(std::istream& stream, uint* result);
 	static bool readInt(std::istream& stream, int* result);
 	static bool readUChar(std::istream& stream, unsigned char* result);
@@ -70,13 +68,16 @@ bool StreamUtils::verifyCheckSum(std::istream& stream, BaseType value)
 
     // read check sum from the stream
     unsigned char stream_check_sum = 0;
-    stream.read((char*)&stream_check_sum, sizeof(stream_check_sum));
+    uint stream_pos = stream.tellg();
+    uint byte_length = sizeof(stream_check_sum);
+    stream.read((char*) &stream_check_sum, byte_length);
     if (stream.fail())
         ProgError("Could not read check sum");
 
     if (user_value_check_sum != stream_check_sum)
     {
-        DVX(("user check sum: 0x%x; stream check sum: 0x%x", user_value_check_sum, stream_check_sum));
+        DVX(
+                ("user check sum: 0x%x; stream check sum: 0x%x @0x%x for %d bytes", user_value_check_sum, stream_check_sum, stream_pos, byte_length));
         ProgError("check sums don't match");
         return false;
     }

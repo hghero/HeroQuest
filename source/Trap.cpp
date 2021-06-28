@@ -12,6 +12,8 @@
 #include "ParameterStorage.h"
 #include "StreamUtils.h"
 #include "PainterContext.h"
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 using namespace std;
 
@@ -82,22 +84,23 @@ QString Trap::getName(const Trap* trap)
     return name;
 }
 
-bool Trap::save(ostream& stream) const
+bool Trap::save(SaveContext& save_context) const
 {
-    StreamUtils::writeBool(stream, _visible);
+    SaveContext::OpenChapter open_chapter(save_context, "Trap");
 
-    _node_id.save(stream);
+    save_context.writeBool(_visible, "_visible");
+    _node_id.save(save_context);
 
-    return !stream.fail();
+    return !save_context.fail();
 }
 
-bool Trap::load(istream& stream)
+bool Trap::load(LoadContext& load_context)
 {
-    StreamUtils::readBool(stream, &_visible);
+    load_context.readBool(&_visible, "_visible");
 
-    _node_id.load(stream);
+    _node_id.load(load_context);
 
-    return !stream.fail();
+    return !load_context.fail();
 }
 
 // =============================================================================
@@ -168,16 +171,20 @@ bool PitTrap::isSpearTrap() const
 	return false;
 }
 
-bool PitTrap::save(std::ostream& stream) const
+bool PitTrap::save(SaveContext& save_context) const
 {
-    Parent::save(stream);
-    return !stream.fail();
+    SaveContext::OpenChapter open_chapter(save_context, "PitTrap");
+
+    Parent::save(save_context);
+    return !save_context.fail();
 }
 
-bool PitTrap::load(std::istream& stream)
+bool PitTrap::load(LoadContext& load_context)
 {
-    Parent::load(stream);
-    return !stream.fail();
+    LoadContext::OpenChapter open_chapter(load_context, "PitTrap");
+
+    Parent::load(load_context);
+    return !load_context.fail();
 }
 
 // =============================================================================
@@ -277,24 +284,28 @@ bool SpearTrap::isSpearTrap() const
 	return true;
 }
 
-bool SpearTrap::save(std::ostream& stream) const
+bool SpearTrap::save(SaveContext& save_context) const
 {
-    Parent::save(stream);
+    SaveContext::OpenChapter open_chapter(save_context, "SpearTrap");
 
-    //StreamUtils::write???(stream, _redraw_start_time); // not needed
-    StreamUtils::writeBool(stream, _first_redraw); // should be always true here
+    Parent::save(save_context);
 
-    return !stream.fail();
+    //save_context.write???(stream, _redraw_start_time); // not needed
+    save_context.writeBool(_first_redraw, "_first_redraw"); // should be always true here
+
+    return !save_context.fail();
 }
 
-bool SpearTrap::load(std::istream& stream)
+bool SpearTrap::load(LoadContext& load_context)
 {
-    Parent::load(stream);
+    LoadContext::OpenChapter open_chapter(load_context, "SpearTrap");
 
-    //StreamUtils::read???(stream, &_redraw_start_time); // not needed
-    StreamUtils::readBool(stream, &_first_redraw); // should be always true here
+    Parent::load(load_context);
 
-    return !stream.fail();
+    //load_context.read???(stream, &_redraw_start_time); // not needed
+    load_context.readBool(&_first_redraw, "_first_redraw"); // should be always true here
+
+    return !load_context.fail();
 }
 
 // =============================================================================

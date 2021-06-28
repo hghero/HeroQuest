@@ -4,6 +4,8 @@
 #include "Door.h"
 
 class QPainter;
+class SaveContext;
+class LoadContext;
 
 /*!
  * A door connects a room to another room, or a room to a hallway.
@@ -57,8 +59,8 @@ public:
 
     void redraw(QPainter& painter);
 
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
 
 protected:
 	bool _visible;

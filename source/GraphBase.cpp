@@ -2,6 +2,8 @@
 #include <QtCore/QtGlobal>
 
 #include "StreamUtils.h"
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 using namespace std;
 
@@ -96,21 +98,20 @@ ostream& operator<<(ostream& s, const NodeID& node_id)
 	return s;
 }
 
-bool NodeID::save(ostream& stream) const
+bool NodeID::save(SaveContext& save_context) const
 {
-    stream.write((char*)&_ix, sizeof(_ix));
-    stream.write((char*)&_iy, sizeof(_iy));
-    return !stream.fail();
+    save_context.writeInt(_ix, "_ix");
+    save_context.writeInt(_iy, "_iy");
+    return !save_context.fail();
 }
 
-bool NodeID::load(istream& stream)
+bool NodeID::load(LoadContext& load_context)
 {
-    char buffer_int[sizeof(int)];
-    stream.read((char*)buffer_int, sizeof(int));
-    _ix = *((uint*)buffer_int);
-    stream.read((char*)buffer_int, sizeof(int));
-    _iy = *((uint*)buffer_int);
-    return !stream.fail();
+    LoadContext::OpenChapter open_chapter(load_context, "NodeID");
+
+    load_context.readInt(&_ix, "_ix");
+    load_context.readInt(&_iy, "_iy");
+    return !load_context.fail();
 }
 
 // ===============================================
@@ -264,31 +265,35 @@ bool Node::hasCommonNeighborWith(const Node& other_node) const
     return false;
 }
 
-bool Node::save(ostream& stream) const
+bool Node::save(SaveContext& save_context) const
 {
-    // _neighbors
-    StreamUtils::writeUInt(stream, _neighbors.size());
-    for (uint i = 0; i < _neighbors.size(); ++i)
-        _neighbors[i].save(stream);
+    SaveContext::OpenChapter open_chapter(save_context, "Node");
 
-    return !stream.fail();
+    // _neighbors
+    save_context.writeUInt(_neighbors.size(), "_neighbors.size()");
+    for (uint i = 0; i < _neighbors.size(); ++i)
+        _neighbors[i].save(save_context);
+
+    return !save_context.fail();
 }
 
-bool Node::load(istream& stream)
+bool Node::load(LoadContext& load_context)
 {
+    LoadContext::OpenChapter open_chapter(load_context, "Node");
+
     // _neighbors
     _neighbors.clear();
     uint num_neighbors = 0;
-    StreamUtils::readUInt(stream, &num_neighbors);
+    load_context.readUInt(&num_neighbors, "_neighbors.size()");
     _neighbors.reserve(num_neighbors);
     for (uint i = 0; i < num_neighbors; ++i)
     {
         NodeID neighbor(0, 0);
-        neighbor.load(stream);
+        neighbor.load(load_context);
         _neighbors.push_back(neighbor);
     }
 
-    return !stream.fail();
+    return !load_context.fail();
 }
 
 // ===============================================

@@ -1,6 +1,8 @@
 #include "Inventory.h"
 #include "Debug.h"
 #include "StreamUtils.h"
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 using namespace std;
 
@@ -305,46 +307,54 @@ bool Inventory::empty() const
     return size() == 0;
 }
 
-bool Inventory::save(std::ostream& stream) const
+bool Inventory::save(SaveContext& save_context) const
 {
-    StreamUtils::writeInt(stream, _gold);
+    SaveContext::OpenChapter open_chapter(save_context, "Inventory");
+
+    save_context.writeInt(_gold, "_gold");
 
     // treasure cards
-    StreamUtils::writeUInt(stream, _treasure_cards.size());
+    save_context.writeUInt(_treasure_cards.size(), "_treasure_cards.size()");
     for (set<TreasureCard>::const_iterator it = _treasure_cards.begin(); it != _treasure_cards.end(); ++it)
     {
-        it->save(stream);
+        it->save(save_context);
     }
 
     // spell cards
-    StreamUtils::writeUInt(stream, _spell_cards.size());
+    save_context.writeUInt(_spell_cards.size(), "_spell_cards.size()");
     for (set<SpellCard>::const_iterator it = _spell_cards.begin(); it != _spell_cards.end(); ++it)
     {
-        it->save(stream);
+        it->save(save_context);
     }
 
     // equipment cards
-    StreamUtils::writeUInt(stream, _equipment_cards.size());
+    save_context.writeUInt(_equipment_cards.size(), "_equipment_cards.size()");
     for (set<EquipmentCard>::const_iterator it = _equipment_cards.begin(); it != _equipment_cards.end(); ++it)
     {
-        it->save(stream);
+        it->save(save_context);
     }
 
-    return !stream.fail();
+    return !save_context.fail();
 }
 
-bool Inventory::load(std::istream& stream)
+bool Inventory::load(LoadContext& load_context)
 {
-    StreamUtils::readInt(stream, &_gold);
+    LoadContext::OpenChapter open_chapter(load_context, "Inventory");
+
+    load_context.readInt(&_gold, "_gold");
 
     // treasure cards
     _treasure_cards.clear();
     uint treasure_cards_size;
-    StreamUtils::readUInt(stream, &treasure_cards_size);
+    load_context.readUInt(&treasure_cards_size, "_treasure_cards.size()");
     for (uint i = 0; i < treasure_cards_size; ++i)
     {
         TreasureCard card;
-        card.load(stream);
+        if (!card.load(load_context))
+        {
+            DVX(("Error loading TreasureCard!"));
+            return false;
+        }
 
         _treasure_cards.insert(card);
     }
@@ -352,11 +362,15 @@ bool Inventory::load(std::istream& stream)
     // spell cards
     _spell_cards.clear();
     uint spell_cards_size;
-    StreamUtils::readUInt(stream, &spell_cards_size);
+    load_context.readUInt(&spell_cards_size, "_spell_cards.size()");
     for (uint i = 0; i < spell_cards_size; ++i)
     {
         SpellCard spell_card;
-        spell_card.load(stream);
+        if (!spell_card.load(load_context))
+        {
+            DVX(("Error loading SpellCard!"));
+            return false;
+        }
 
         _spell_cards.insert(spell_card);
     }
@@ -364,16 +378,20 @@ bool Inventory::load(std::istream& stream)
     // equipment cards
     _equipment_cards.clear();
     uint equipment_cards_size;
-    StreamUtils::readUInt(stream, &equipment_cards_size);
+    load_context.readUInt(&equipment_cards_size, "_equipment_cards.size()");
     for (uint i = 0; i < equipment_cards_size; ++i)
     {
         EquipmentCard equipment_card;
-        equipment_card.load(stream);
+        if (!equipment_card.load(load_context))
+        {
+            DVX(("Error loading EquipmentCard!"));
+            return false;
+        }
 
         _equipment_cards.insert(equipment_card);
     }
 
-    return !stream.fail();
+    return !load_context.fail();
 }
 
 /*!

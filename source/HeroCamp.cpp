@@ -6,6 +6,8 @@
 #include "GameState.h"
 #include "Hero.h"
 #include "SpellCardStorage.h"
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 using namespace std;
 
@@ -126,7 +128,7 @@ void HeroCamp::getHeroes(vector<Hero*>* heroes)
 /*!
  * @return True if at least one hero has more than 0 gold pieces; false otherwise.
  */
-bool HeroCamp::heroesCanByEquipment() const
+bool HeroCamp::heroesCanBuyEquipment() const
 {
     for (vector<Hero*>::const_iterator it = _heroes.begin(); it != _heroes.end(); ++it)
     {
@@ -138,24 +140,30 @@ bool HeroCamp::heroesCanByEquipment() const
     return false;
 }
 
-bool HeroCamp::save(std::ostream& stream) const
+bool HeroCamp::save(SaveContext& save_context) const
 {
+    SaveContext::OpenChapter open_chapter(save_context, "HeroCamp");
     bool result = true;
 
     for (uint i = 0; i < _heroes.size(); ++i)
     {
-        StreamUtils::write(stream, _heroes[i]->getName());
+        QString i_str;
+        i_str.setNum(i);
+        SaveContext::OpenChapter open_chapter_hero(save_context, QString("_heroes[") + i_str + "]");
 
-        if (!_heroes[i]->save(stream))
+        save_context.writeString(_heroes[i]->getName(), "name");
+
+        if (!_heroes[i]->save(save_context))
             result = false;
     }
 
     return result;
 }
 
-bool HeroCamp::load(std::istream& stream, const GameState& game_state)
+bool HeroCamp::load(LoadContext& load_context, const GameState& game_state)
 {
-    bool result = true;
+    LoadContext::OpenChapter open_chapter(load_context, "HeroCamp");
+
     DV(("num_heroes: %d", game_state._hero_names.size()));
 
     // recreate heroes
@@ -164,13 +172,16 @@ bool HeroCamp::load(std::istream& stream, const GameState& game_state)
     for (uint i = 0; i < game_state._hero_names.size(); ++i)
     {
         QString hero_name;
-        StreamUtils::read(stream, &hero_name);
+        QString i_str;
+        i_str.setNum(i);
+        if (!load_context.readString(&hero_name, QString("_heroes[") + i_str + "].name"))
+            return false;
 
-        if (!_heroes[i]->load(stream))
-            result = false;
+        if (!_heroes[i]->load(load_context))
+            return false;
     }
 
-    return result;
+    return true;
 }
 
 /*!

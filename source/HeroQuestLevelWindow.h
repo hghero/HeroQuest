@@ -36,6 +36,8 @@ class EquipmentCardStorage;
 class Command;
 class HeroCamp;
 class PitTrap;
+class SaveContext;
+class LoadContext;
 
 class HeroQuestLevelWindow : public QMainWindow
 {
@@ -131,8 +133,8 @@ class HeroQuestLevelWindow : public QMainWindow
     bool checkDefend(Hero* hero);
     bool checkDeath(Hero* hero);
 
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
 
     bool loadImagesAndAdjustPointers();
 
@@ -222,6 +224,8 @@ class HeroQuestLevelWindow : public QMainWindow
 
   private slots:
     void searchTrapsButtonClicked();
+    void searchTrapsButtonPressed();
+    void searchTrapsButtonReleased();
     void searchTreasuresButtonClicked();
     void delayTurnButtonClicked();
     void endTurnButtonClicked();

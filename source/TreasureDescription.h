@@ -10,6 +10,8 @@
 #include "TreasureDataTypes.h"
 
 class QPixmap;
+class SaveContext;
+class LoadContext;
 
 /*!
  * Interprets and stores the treasure card descriptions given by .txt treasure card files.
@@ -52,8 +54,8 @@ public:
 	bool containsInventoryItem() const;
 	bool getInventoryItems(std::vector<QString>* items) const;
 
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
 
     void updateTreasureImage();
 

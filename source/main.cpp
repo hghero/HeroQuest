@@ -1,5 +1,5 @@
 
-#define HQ_VERSION "0.3"
+#define HQ_VERSION "0.4"
 
 #include <cstdlib>
 #include <ctime>
@@ -11,6 +11,7 @@
 #include <QtWidgets/QFileDialog>
 #include <QtCore/QResource>
 
+#include "Preferences.h"
 #include "HeroQuestStartDialog.h"
 #include "HeroQuestNewGameDialog.h"
 #include "HeroQuestLevelWindow.h"
@@ -26,12 +27,16 @@
 #include "DialogLevelFinished.h"
 #include "HeroCamp.h"
 #include "DialogBuyEquipment.h"
+#include "LoadContext.h"
 
 using namespace std;
 
 /*
  * TODO:
- * - mit SonarGraph o.Ä. eine Grafik bauen, welche Klasse mit welcher anderen redet
+ * - neue Spieler empfinden das Verschwinden der Würfelergebnisse als zu schnell => dies sollte eine
+ *   Preference-Einstellung sein! => zunächst als XML-Datei
+ * - Zaubersprüche sollen nach dem Ende eines Levels wieder neu zugeteilt werden!
+ * - Level 3 implementieren
  */
 int main(int argc, char* argv[])
 {
@@ -110,9 +115,10 @@ int main(int argc, char* argv[])
                         continue;
                     }
 
-                    ifstream infile(filename.toUtf8().constData(), ios::binary);
+                    LoadContext load_context(filename,
+                            Preferences::ENABLE_SAVE_LOAD_LOG ? LoadContext::ENABLE_LOG : LoadContext::DISABLE_LOG);
 
-                    if (!game_state.load(infile))
+                    if (!game_state.load(load_context))
                     {
                         // loading the game suffered from some error => cancel loading and start over
                         continue;
@@ -160,36 +166,34 @@ int main(int argc, char* argv[])
             DialogLevelBriefing dialog_level_briefing((GameState::LevelID) i_level);
             dialog_level_briefing.exec();
 
-            // buy equipment, if some hero has > 0 gold pieces
-            if (hero_camp.heroesCanByEquipment())
+            // for now: normal operation mode
+            game_state._current_level_state = GameState::RUNNING; // TODO: wozu braucht man diesen levelState?
+
+            {
+                HeroQuestLevelWindow hero_quest_level_window(HQ_VERSION, app, filename, &game_state,
+                        &spell_card_storage, &treasure_card_storage, &equipment_card_storage, hero_camp);
+                filename = ""; // don't re-load the same level when we come here again
+                hero_quest_level_window.show();
+
+                // start global event loop
+                int exit_code = app.exec();
+                if (exit_code == HeroQuestLevelWindow::EXIT_CODE_LEVEL_FINISHED)
+                {
+                    DialogLevelFinished dialog_level_finished;
+                    dialog_level_finished.exec();
+                }
+                else if (exit_code == HeroQuestLevelWindow::EXIT_CODE_LOST)
+                {
+                    break;
+                }
+            }
+
+            // buy equipment, if some hero has > 0 gold pieces, and there is still a level to go
+            if (hero_camp.heroesCanBuyEquipment() && (i_level < game_state._level_names.size() - 1))
             {
                 DialogBuyEquipment dialog_buy_equipment(hero_camp);
                 dialog_buy_equipment.exec();
             }
-
-            // for now: normal operation mode
-            game_state._current_level_state = GameState::RUNNING; // TODO: wozu braucht man diesen levelState?
-
-            HeroQuestLevelWindow hero_quest_level_window(HQ_VERSION, app, filename, &game_state, &spell_card_storage,
-                    &treasure_card_storage, &equipment_card_storage, hero_camp);
-            filename = ""; // don't re-load the same level when we come here again
-            hero_quest_level_window.show();
-
-            // start global event loop
-            int exit_code = app.exec();
-            if (exit_code == HeroQuestLevelWindow::EXIT_CODE_LEVEL_FINISHED)
-            {
-                DialogLevelFinished dialog_level_finished;
-                dialog_level_finished.exec();
-            }
-            else if (exit_code == HeroQuestLevelWindow::EXIT_CODE_LOST)
-            {
-                break;
-            }
-
-            // DEBUG:
-            //DialogBuyEquipment dialog_buy_equipment_choose_hero(hero_camp);
-            //dialog_buy_equipment_choose_hero.exec();
         }
     }
 

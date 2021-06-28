@@ -7,6 +7,8 @@
 
 class QuestBoard;
 class QPainter;
+class SaveContext;
+class LoadContext;
 
 /*!
  * A door connects a room to another room, or a room to a hallway.
@@ -67,8 +69,8 @@ public:
 
     static QString getName(const Door* door);
 
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
 
 protected:
 	//! The door connects nodes f1 and f2 on the quest board.

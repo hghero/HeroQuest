@@ -9,6 +9,9 @@
 
 #include "SpellCard.h"
 
+class SaveContext;
+class LoadContext;
+
 struct GameState
 {
     enum CurrentLevelState {
@@ -24,8 +27,8 @@ struct GameState
 	GameState();
 	virtual ~GameState();
 
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
 
     std::vector<QString> _hero_names;
     SpellCard::SpellFamily _alb_spell_family;

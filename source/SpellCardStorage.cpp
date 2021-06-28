@@ -6,6 +6,8 @@
 
 #include "StreamUtils.h"
 #include "Debug.h"
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 using namespace std;
 
@@ -181,40 +183,50 @@ QPixmap* SpellCardStorage::getSpellCardImage(const SpellCard::SpellID& spell_id)
     return it->second;
 }
 
-bool SpellCardStorage::save(ostream& stream) const
+bool SpellCardStorage::save(SaveContext& save_context) const
 {
-    StreamUtils::writeUInt(stream, _spell_card_stock.size());
-    for (uint i = 0; i < _spell_card_stock.size(); ++i)
+    SaveContext::OpenChapter open_chapter(save_context, "SpellCardStorage");
+
     {
-        if (!_spell_card_stock[i].save(stream))
+        SaveContext::OpenChapter open_chapter_spell_card_stock(save_context, "_spell_card_stock");
+        save_context.writeUInt(_spell_card_stock.size(), "_spell_card_stock.size()");
+        for (uint i = 0; i < _spell_card_stock.size(); ++i)
         {
-            DVX(("Error saving card %d from spell card stock!", i));
-            return false;
+            if (!_spell_card_stock[i].save(save_context))
+            {
+                DVX(("Error saving card %d from spell card stock!", i));
+                return false;
+            }
         }
     }
 
-    StreamUtils::writeUInt(stream, _spell_card_deposition.size());
-    for (uint i = 0; i < _spell_card_deposition.size(); ++i)
     {
-        if (!_spell_card_deposition[i].save(stream))
+        SaveContext::OpenChapter open_chapter_spell_card_deposition(save_context, "_spell_card_deposition");
+        save_context.writeUInt(_spell_card_deposition.size(), "_spell_card_deposition.size()");
+        for (uint i = 0; i < _spell_card_deposition.size(); ++i)
         {
-            DVX(("Error saving card %d from spell card deposition!", i));
-            return false;
+            if (!_spell_card_deposition[i].save(save_context))
+            {
+                DVX(("Error saving card %d from spell card deposition!", i));
+                return false;
+            }
         }
     }
 
     return true;
 }
 
-bool SpellCardStorage::load(istream& stream)
+bool SpellCardStorage::load(LoadContext& load_context)
 {
+    LoadContext::OpenChapter open_chapter(load_context, "SpellCardStorage");
+
     _spell_card_stock.clear();
     uint num_spell_cards_stock;
-    StreamUtils::readUInt(stream, &num_spell_cards_stock);
+    load_context.readUInt(&num_spell_cards_stock, "_spell_card_stock.size()");
     for (uint i = 0; i < num_spell_cards_stock; ++i)
     {
         SpellCard spell_card;
-        if (!spell_card.load(stream))
+        if (!spell_card.load(load_context))
         {
             DVX(("Error loading spell card %d to spell card stock!", i));
             return false;
@@ -225,11 +237,11 @@ bool SpellCardStorage::load(istream& stream)
 
     _spell_card_deposition.clear();
     uint num_spell_cards_deposition;
-    StreamUtils::readUInt(stream, &num_spell_cards_deposition);
+    load_context.readUInt(&num_spell_cards_deposition, "_spell_card_deposition.size()");
     for (uint i = 0; i < num_spell_cards_deposition; ++i)
     {
         SpellCard spell_card;
-        if (!spell_card.load(stream))
+        if (!spell_card.load(load_context))
         {
             DVX(("Error loading spell card %d to spell card deposition!", i));
             return false;

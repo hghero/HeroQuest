@@ -11,6 +11,8 @@
 #include "Monster.h"
 #include "Debug.h"
 #include "Level.h"
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 using namespace std;
 
@@ -378,28 +380,32 @@ bool BoardGraph::isWall(const NodeID& node1, const NodeID& node2) const
 	return !door->getOpen();
 }
 
-bool BoardGraph::save(ostream& stream) const
+bool BoardGraph::save(SaveContext& save_context) const
 {
+    SaveContext::OpenChapter open_chapter(save_context, "BoardGraph");
+
     DV(("save: nodes height x width: %d x %d", _nodes.getHeight(), _nodes.getWidth()));
     // _nodes
     for (int y = 0; y < _nodes.getHeight(); ++y)
         for (int x = 0; x < _nodes.getWidth(); ++x)
         {
-            _nodes[y][x].save(stream);
+            _nodes[y][x].save(save_context);
         }
 
-    return !stream.fail();
+    return !save_context.fail();
 }
 
-bool BoardGraph::load(istream& stream)
+bool BoardGraph::load(LoadContext& load_context)
 {
+    LoadContext::OpenChapter open_chapter(load_context, "BoardGraph");
+
     DV(("load: nodes height x width: %d x %d", _nodes.getHeight(), _nodes.getWidth()));
     // _nodes
     for (int y = 0; y < _nodes.getHeight(); ++y)
         for (int x = 0; x < _nodes.getWidth(); ++x)
         {
-            _nodes[y][x].load(stream);
+            _nodes[y][x].load(load_context);
         }
 
-    return !stream.fail();
+    return !load_context.fail();
 }

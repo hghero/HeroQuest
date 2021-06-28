@@ -10,6 +10,8 @@
 #include "QuestBoard.h"
 #include "SpellCardStorage.h"
 #include "Debug.h"
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 using namespace std;
 
@@ -226,24 +228,26 @@ QPixmap* SpellCard::getImage() const
     return SpellCardStorage::instance->getSpellCardImage(getSpellID());
 }
 
-bool SpellCard::save(std::ostream& stream) const
+bool SpellCard::save(SaveContext& save_context) const
 {
-    Parent::save(stream);
+    Parent::save(save_context);
 
-    StreamUtils::writeUInt(stream, uint(_spell_id));
+    save_context.writeUInt(uint(_spell_id), "_spell_id");
 
-    return !stream.fail();
+    return !save_context.fail();
 }
 
-bool SpellCard::load(std::istream& stream)
+bool SpellCard::load(LoadContext& load_context)
 {
-    Parent::load(stream);
+    LoadContext::OpenChapter open_chapter(load_context, "SpellCard");
+
+    Parent::load(load_context);
 
     uint spell_id_uint = 0;
-    StreamUtils::readUInt(stream, &spell_id_uint);
+    load_context.readUInt(&spell_id_uint, "_spell_id");
     _spell_id = SpellCard::SpellID(spell_id_uint);
 
-    return !stream.fail();
+    return !load_context.fail();
 }
 
 bool SpellCard::execute() const

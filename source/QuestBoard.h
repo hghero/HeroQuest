@@ -12,6 +12,8 @@ class Playground;
 class Door;
 class Hero;
 class QMouseEvent;
+class SaveContext;
+class LoadContext;
 
 class QuestBoard
 {
@@ -55,7 +57,8 @@ public:
 	/*
 	void computeViewedFields(const NodeID& field, std::vector<NodeID>* viewed_fields) const;
 	*/
-	bool fieldCanBeViewedFromField(const NodeID& field1, const NodeID& field2, bool respect_field2_borders) const;
+    bool fieldCanBeViewedFromField(const NodeID& field1, const NodeID& field2, bool respect_field2_borders,
+            bool view_through_heroes) const;
     bool nodesAreInSameRowOrColumn(const NodeID& field1, const NodeID& field2) const;
 
 	bool getNodeID(const Vec2i& screen_coords, NodeID* node_id) const;
@@ -92,11 +95,14 @@ public:
 
 	bool contains(const NodeID& node_id) const;
 
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
 
     void computeReachableArea();
     void clearReachableArea();
+
+    void computeSearchableArea();
+    void clearSearchableArea();
 
 private:
     void computeMovementPath(const NodeID& node_id);
@@ -107,7 +113,8 @@ private:
 
 	void removeOccupiedFieldsFromEnd(std::vector<NodeID>* path) const;
 
-	void getBorderLinesOfNode(const NodeID& node_id, std::vector<Line>* node_borders, bool only_wall_borders, const NodeID* ignore_field) const;
+    void getBorderLinesOfNode(const NodeID& node_id, bool ignore_heroes, std::vector<Line>* node_borders,
+            bool only_wall_borders, const NodeID* ignore_field) const;
 
 	void handleMouseEventInActionModeMoveOrAttackOrOpenDoor(QMouseEvent* event);
     void handleMouseEventInActionModeSelectFieldOrDoor(QMouseEvent* event);
@@ -141,6 +148,9 @@ private:
 
     // set of nodes reachable by the currently acting hero considering the current movement dice result
     std::set<NodeID> _reachable_area;
+
+    // set of nodes searchable when clicking the search traps/secretDoors button
+    std::set<NodeID> _searchable_area;
 
 	// attacking
 	bool _attack_destination_valid;

@@ -17,11 +17,10 @@
 #include "TreasureCard.h"
 #include "SpellCard.h"
 
-#define DEBUG_MODE_SAVE_GAMES
-#define DEBUG_MODE_SAVE_GAMES_DIR "C:/Users/Hagen/Desktop/hqsave"
-
 class Decoration;
 class Chest;
+class SaveContext;
+class LoadContext;
 
 class Level
 {
@@ -46,8 +45,8 @@ public:
         void reset();
         void set(const SetType& set_type);
 
-        virtual bool save(std::ostream& stream) const;
-        virtual bool load(std::istream& stream);
+        virtual bool save(SaveContext& save_context) const;
+        virtual bool load(LoadContext& load_context);
 
         bool _has_acted_at_all;
         bool _has_moved;
@@ -68,8 +67,8 @@ public:
         void reset(bool start_turn);
         void set(const SetType& set_type);
 
-        virtual bool save(std::ostream& stream) const;
-        virtual bool load(std::istream& stream);
+        virtual bool save(SaveContext& save_context) const;
+        virtual bool load(LoadContext& load_context);
 
         bool _has_searched;
         bool _has_thrown_movement_dice;
@@ -86,8 +85,8 @@ public:
 
         void reset();
 
-        virtual bool save(std::ostream& stream) const;
-        virtual bool load(std::istream& stream);
+        virtual bool save(SaveContext& save_context) const;
+        virtual bool load(LoadContext& load_context);
     };
 
     struct LevelState
@@ -114,8 +113,8 @@ public:
             return _current_monster_idx != UINT_MAX;
         }
 
-        bool save(std::ostream& stream) const;
-        bool load(std::istream& stream);
+        bool save(SaveContext& save_context) const;
+        bool load(LoadContext& load_context);
 
         uint _round_no; // number of current round
         uint _current_hero_idx; // index of current hero; index UINT_MAX means that no hero is currently acting
@@ -155,6 +154,8 @@ public:
 	// inputs
 	void initCurrentHeroActionStateToMoveOrAttack();
     virtual void searchTrapsButtonClicked();
+    virtual void searchTrapsButtonPressed();
+    virtual void searchTrapsButtonReleased();
 	void searchTreasuresButtonClicked();
 	void delayTurnButtonClicked();
 	void endTurnButtonClicked();
@@ -246,8 +247,8 @@ public:
 	bool removeCreature(Creature* creature);
     bool isCreatureAlive(Creature* creature);
 
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
 
     void updateTreasureImages();
 
@@ -345,7 +346,7 @@ private:
 	uint getHeroIndex(Hero* hero) const;
     uint getMonsterIndex(Monster* monster) const;
 	
-    void debugModeSaveGames();
+    void autoSave();
 
     void putSpellCardsBackToStorage(Hero* hero);
 

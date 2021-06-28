@@ -10,6 +10,8 @@
 #include "Playground.h"
 #include "BoardGraph.h"
 #include "QuestBoard.h"
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 using namespace std;
 
@@ -111,7 +113,7 @@ int Hero::getHighestNumDiceAttack(const Creature* defender) const
 
     // check distance attack
     if (HeroQuestLevelWindow::_hero_quest->getPlayground()->getQuestBoard()->fieldCanBeViewedFromField(
-            *attacker_node_id, *defender_node_id, true /*respect_field2_borders*/)
+            *attacker_node_id, *defender_node_id, true /*respect_field2_borders*/, true /*view_through_heroes*/)
             && HeroQuestLevelWindow::_hero_quest->getPlayground()->getQuestBoard()->nodesAreInSameRowOrColumn(
                     *attacker_node_id, *defender_node_id))
     {
@@ -242,66 +244,75 @@ Creature* Hero::copy() const
 	return 0;
 }
 
-bool Hero::save(ostream& stream) const
+bool Hero::save(SaveContext& save_context) const
 {
-    Parent::save(stream);
+    SaveContext::OpenChapter open_chapter(save_context, "Hero");
+
+    Parent::save(save_context);
 
     // movement
-    StreamUtils::writeInt(stream, _num_dice_move);
-    StreamUtils::writeInt(stream, _num_dice_move_extra);
-    StreamUtils::writeBool(stream, _can_move_through_walls);
+    save_context.writeInt(_num_dice_move, "_num_dice_move");
+    save_context.writeInt(_num_dice_move_extra, "_num_dice_move_extra");
+    save_context.writeBool(_can_move_through_walls, "_can_move_through_walls");
 
     // attack
-    StreamUtils::writeInt(stream, _num_dice_attack_extra);
+    save_context.writeInt(_num_dice_attack_extra, "_num_dice_attack_extra");
 
     // defend
-    StreamUtils::writeInt(stream, _num_dice_defend_extra);
+    save_context.writeInt(_num_dice_defend_extra, "_num_dice_defend_extra");
 
     // equipment and valuables
-    _inventory.save(stream);
+    _inventory.save(save_context);
 
     // spells
-    StreamUtils::writeUInt(stream, _spell_families.size());
+    save_context.writeUInt(_spell_families.size(), "_spell_families.size()");
     for (uint i = 0; i < _spell_families.size(); ++i)
     {
         uint spell_family_uint = (uint) (_spell_families[i]);
-        StreamUtils::writeUInt(stream, spell_family_uint);
+        QString i_str;
+        i_str.setNum(i);
+        save_context.writeUInt(spell_family_uint, QString("_spell_families[") + i_str + "]");
     }
 
-    return !stream.fail();
+    return !save_context.fail();
 }
 
-bool Hero::load(istream& stream)
+bool Hero::load(LoadContext& load_context)
 {
-    Parent::load(stream);
+    LoadContext::OpenChapter open_chapter(load_context, "Hero");
+
+    Parent::load(load_context);
 
     // movement
-    StreamUtils::readInt(stream, &_num_dice_move);
-    StreamUtils::readInt(stream, &_num_dice_move_extra);
-    StreamUtils::readBool(stream, &_can_move_through_walls);
+    load_context.readInt(&_num_dice_move, "_num_dice_move");
+    load_context.readInt(&_num_dice_move_extra, "_num_dice_move_extra");
+    load_context.readBool(&_can_move_through_walls, "_can_move_through_walls");
 
     // attack
-    StreamUtils::readInt(stream, &_num_dice_attack_extra);
+    load_context.readInt(&_num_dice_attack_extra, "_num_dice_attack_extra");
 
     // defend
-    StreamUtils::readInt(stream, &_num_dice_defend_extra);
+    load_context.readInt(&_num_dice_defend_extra, "_num_dice_defend_extra");
 
     // equipment and valuables
-    _inventory.load(stream);
+    _inventory.load(load_context);
 
     // spells
     uint num_spell_families;
-    StreamUtils::readUInt(stream, &num_spell_families);
+    load_context.readUInt(&num_spell_families, "_spell_families.size()");
     _spell_families.clear();
     for (uint i = 0; i < num_spell_families; ++i)
     {
         uint spell_family_uint;
-        StreamUtils::readUInt(stream, &spell_family_uint);
+        QString i_str;
+        i_str.setNum(i);
+        if (!load_context.readUInt(&spell_family_uint, QString("_spell_families[") + i_str + "]"))
+            return false;
 
         _spell_families.push_back((SpellCard::SpellFamily) spell_family_uint);
     }
 
-    return !stream.fail();
+    return !load_context.fail();
 }
 
 /*!

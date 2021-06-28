@@ -9,6 +9,8 @@
 #include "Debug.h"
 #include "TreasureDescription.h"
 #include "TreasureCard.h"
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 using namespace std;
 
@@ -212,12 +214,14 @@ QPixmap* TreasureCardStorage::getChest3DImage() const
     return _chest_3d_image;
 }
 
-bool TreasureCardStorage::save(ostream& stream) const
+bool TreasureCardStorage::save(SaveContext& save_context) const
 {
-    StreamUtils::writeUInt(stream, _treasure_cards.size());
+    SaveContext::OpenChapter open_chapter(save_context, "TreasureCardStorage");
+
+    save_context.writeUInt(_treasure_cards.size(), "_treasure_cards.size()");
     for (uint i = 0; i < _treasure_cards.size(); ++i)
     {
-        if (!_treasure_cards[i].save(stream))
+        if (!_treasure_cards[i].save(save_context))
         {
             DVX(("Error saving treasure card %d!", i));
             return false;
@@ -226,15 +230,15 @@ bool TreasureCardStorage::save(ostream& stream) const
     return true;
 }
 
-bool TreasureCardStorage::load(istream& stream)
+bool TreasureCardStorage::load(LoadContext& load_context)
 {
     _treasure_cards.clear();
     uint num_treasure_cards;
-    StreamUtils::readUInt(stream, &num_treasure_cards);
+    load_context.readUInt(&num_treasure_cards, "_treasure_cards.size()");
     for (uint i = 0; i < num_treasure_cards; ++i)
     {
         TreasureCard treasure_card;
-        if (!treasure_card.load(stream))
+        if (!treasure_card.load(load_context))
         {
             DVX(("Error loading treasure card %d!", i));
             return false;

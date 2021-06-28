@@ -6,7 +6,8 @@
 #include "QuestBoard.h"
 #include "Playground.h"
 #include "StreamUtils.h"
-
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 using namespace std;
 
@@ -41,14 +42,14 @@ bool NonWalkableDecoration::isWalkable() const
 	return false;
 }
 
-bool NonWalkableDecoration::save(std::ostream& stream) const
+bool NonWalkableDecoration::save(SaveContext& save_context) const
 {
-    return Parent::save(stream);
+    return Parent::save(save_context);
 }
 
-bool NonWalkableDecoration::load(std::istream& stream)
+bool NonWalkableDecoration::load(LoadContext& load_context)
 {
-    return Parent::load(stream);
+    return Parent::load(load_context);
 }
 
 // =============================================================================
@@ -93,26 +94,28 @@ void Chest::setOpen(bool value)
     _open = value;
 }
 
-bool Chest::save(std::ostream& stream) const
+bool Chest::save(SaveContext& save_context) const
 {
-    if (!Parent::save(stream))
+    SaveContext::OpenChapter open_chapter(save_context, "Chest");
+
+    if (!Parent::save(save_context))
     {
         DVX(("ERROR: Chest::save"));
         return false;
     }
 
-    return StreamUtils::writeBool(stream, _open);
+    return save_context.writeBool(_open, "_open");
 }
 
-bool Chest::load(std::istream& stream)
+bool Chest::load(LoadContext& load_context)
 {
-    if (!Parent::load(stream))
+    if (!Parent::load(load_context))
     {
         DVX(("ERROR: Chest::load"));
         return false;
     }
 
-    return StreamUtils::readBool(stream, &_open);
+    return load_context.readBool(&_open, "_open");
 }
 
 // =============================================================================

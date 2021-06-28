@@ -1,5 +1,8 @@
 #include "InventoryItem.h"
 
+#include "SaveContext.h"
+#include "LoadContext.h"
+
 //using namespace std;
 
 
@@ -28,12 +31,12 @@ bool InventoryItem::isEquipmentCard() const
     return false;
 }
 
-bool InventoryItem::save(std::ostream& stream) const
+bool InventoryItem::save(SaveContext& save_context) const
 {
     return true;
 }
 
-bool InventoryItem::load(std::istream& stream)
+bool InventoryItem::load(LoadContext& load_context)
 {
     return true;
 }

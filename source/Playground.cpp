@@ -23,7 +23,8 @@
 #include "PainterContext.h"
 #include "ParameterStorage.h"
 #include "GraphBase.h"
-
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 using namespace std;
 
@@ -592,8 +593,12 @@ Monster* Playground::getMonster(const NodeID& node_id)
  * If respect_target_node_border is false, then the borders of target fields occupied by creatures
  * are not respected during the sectioning algorithm, i.e. then the target node is seen although
  * there is a creature standing on it.
+ *
+ * If view_through_heroes is true, heroes are not respected during the sectioning algorithm, i.e.
+ * you can "see through" them.
  */
-void Playground::computeViewableNodes(const NodeID& node_id, bool respect_target_node_border, set<NodeID>* viewable_nodes) const
+void Playground::computeViewableNodes(const NodeID& node_id, bool respect_target_node_border, bool view_through_heroes,
+        set<NodeID>* viewable_nodes) const
 {
 	viewable_nodes->clear();
 	viewable_nodes->insert(node_id);
@@ -606,7 +611,8 @@ void Playground::computeViewableNodes(const NodeID& node_id, bool respect_target
 			if (check_node_id == node_id)
 				continue;
 
-			if (_quest_board->fieldCanBeViewedFromField(node_id, check_node_id, respect_target_node_border))
+            if (_quest_board->fieldCanBeViewedFromField(node_id, check_node_id, respect_target_node_border,
+                    view_through_heroes))
 				viewable_nodes->insert(check_node_id);
 		}
 }
@@ -875,7 +881,7 @@ bool Playground::computeRoamingMonsterPos(const NodeID& target_node, NodeID* roa
 
 	// 3) Find a field in the "same" hallway, i.e. an unoccupied field which is visible from target_node.
 	set<NodeID> viewable_nodes;
-	computeViewableNodes(target_node, false, &viewable_nodes);
+    computeViewableNodes(target_node, false, false, &viewable_nodes);
 	for (set<NodeID>::const_iterator it = viewable_nodes.begin(); it != viewable_nodes.end(); ++it)
 	{
         if (!isFieldOccupied(*it))
@@ -902,7 +908,7 @@ bool Playground::heroSeesMonster(Hero* hero) const
 			const NodeID& monster_node_id = it->second;
 			const NodeID& hero_node_id = _creatures.find(hero)->second;
 			// is monster_node viewed from hero_node?
-			if (_quest_board->fieldCanBeViewedFromField(monster_node_id, hero_node_id, false))
+            if (_quest_board->fieldCanBeViewedFromField(monster_node_id, hero_node_id, false, true))
 				return true;
 		}
 	}
@@ -928,7 +934,7 @@ bool Playground::creatureIsInHorizontalOrVerticalLineOfSightOfHero(const Creatur
     }
 
     // check if creature is visible by hero
-    if (!_quest_board->fieldCanBeViewedFromField(*creature_pos, *hero_pos, false))
+    if (!_quest_board->fieldCanBeViewedFromField(*creature_pos, *hero_pos, false, true))
     {
         // not viewed
         return false;
@@ -1046,7 +1052,7 @@ void Playground::setNodeVisibility(const list<NodeID>& nodes, bool visible)
 void Playground::setNodesViewableFromNodeVisible(const NodeID& node_id)
 {
     set<NodeID> viewable_nodes;
-    computeViewableNodes(node_id, false, &viewable_nodes);
+    computeViewableNodes(node_id, false, false, &viewable_nodes);
     setNodeVisibility(viewable_nodes, true);
 }
 
@@ -1147,60 +1153,66 @@ void Playground::makeAllRelevantNodesVisible()
     }
 }
 
-bool Playground::save(ostream& stream) const
+bool Playground::save(SaveContext& save_context) const
 {
     //! Map of heroes (barbarian, dwarf, alb, magician) and monsters, mapped to Playground positions (NodeID)
-    StreamUtils::writeUInt(stream, _creatures.size());
+    save_context.writeUInt(_creatures.size(), "_creatures.size()");
     for (map<Creature*, NodeID>::const_iterator it = _creatures.begin(); it != _creatures.end(); ++it)
     {
-        StreamUtils::writeUInt(stream, it->first->getReferencingID());
+        save_context.writeUInt(it->first->getReferencingID(), "Creature referencingID");
         DV(("Saving creature referencing id %d", it->first->getReferencingID()));
-        it->second.save(stream);
+        it->second.save(save_context);
     }
 
     //! Mapping of nodes to decoration
-    StreamUtils::writeUInt(stream, _nodes_to_decoration.size());
+    save_context.writeUInt(_nodes_to_decoration.size(), "_nodes_to_decoration.size()");
     for (map<NodeID, Decoration*>::const_iterator it = _nodes_to_decoration.begin(); it != _nodes_to_decoration.end(); ++it)
     {
-        it->first.save(stream);
-        StreamUtils::writeUInt(stream, it->second->getReferencingID());
+        it->first.save(save_context);
+        save_context.writeUInt(it->second->getReferencingID(), "Decoration referencingID");
     }
 
     // _node_visibility
     uint node_visibility_width = _node_visibility.getWidth();
     uint node_visibility_height = _node_visibility.getHeight();
-    StreamUtils::writeUInt(stream, node_visibility_width);
-    StreamUtils::writeUInt(stream, node_visibility_height);
+    save_context.writeUInt(node_visibility_width, "node_visibility_width");
+    save_context.writeUInt(node_visibility_height, "node_visibility_height");
     for (uint y = 0; y < node_visibility_height; ++y)
         for (uint x = 0; x < node_visibility_width; ++x)
         {
-            StreamUtils::writeBool(stream, _node_visibility[y][x]);
+            QString x_num, y_num;
+            x_num.setNum(x);
+            y_num.setNum(y);
+            save_context.writeBool(_node_visibility[y][x],
+                    QString("_node_visibility[") + x_num + "][" + y_num + "]");
         }
 
     // _action_mode
-    StreamUtils::writeUInt(stream, uint(_action_mode));
+    save_context.writeUInt(uint(_action_mode), "_action_mode");
     // _action_mode_related_hero
     uint related_hero_referencing_id =
             _action_mode_related_hero != 0 ? _action_mode_related_hero->getReferencingID() : UINT_MAX;
-    StreamUtils::writeUInt(stream, related_hero_referencing_id);
+    save_context.writeUInt(related_hero_referencing_id, "related_hero_referencing_id");
 
-    _quest_board->save(stream);
+    _quest_board->save(save_context);
 
-    return !stream.fail();
+    return !save_context.fail();
 }
 
-bool Playground::load(istream& stream)
+bool Playground::load(LoadContext& load_context)
 {
+    LoadContext::OpenChapter open_chapter(load_context, "Playground");
+
     _creatures.clear();
     _nodes.clear();
     uint num_creatures;
-    StreamUtils::readUInt(stream, &num_creatures);
+    load_context.readUInt(&num_creatures, "_creatures.size()");
     for (uint i = 0; i < num_creatures; ++i)
     {
         uint ref_id;
-        StreamUtils::readUInt(stream, &ref_id);
+        load_context.readUInt(&ref_id, "ref_id");
         NodeID node_id;
-        node_id.load(stream);
+        node_id.load(load_context);
 
         Creature* creature = HeroQuestLevelWindow::_hero_quest->getCreature(ref_id);
 
@@ -1211,14 +1223,14 @@ bool Playground::load(istream& stream)
 
     _nodes_to_decoration.clear();
     uint num_decoration;
-    StreamUtils::readUInt(stream, &num_decoration);
+    load_context.readUInt(&num_decoration, "_nodes_to_decoration.size()");
     for (uint i = 0; i < num_decoration; ++i)
     {
         NodeID node_id;
-        node_id.load(stream);
+        node_id.load(load_context);
 
         uint ref_id;
-        StreamUtils::readUInt(stream, &ref_id);
+        load_context.readUInt(&ref_id, "ref_id for decoration");
 
         Decoration* decoration = HeroQuestLevelWindow::_hero_quest->getLevel()->getDecoration(ref_id);
 
@@ -1229,28 +1241,34 @@ bool Playground::load(istream& stream)
     // _node_visibility
     uint node_visibility_width;
     uint node_visibility_height;
-    StreamUtils::readUInt(stream, &node_visibility_width);
-    StreamUtils::readUInt(stream, &node_visibility_height);
+    load_context.readUInt(&node_visibility_width, "node_visibility_width");
+    load_context.readUInt(&node_visibility_height, "node_visibility_height");
     _node_visibility.resize(node_visibility_width, node_visibility_height);
     for (uint y = 0; y < node_visibility_height; ++y)
+    {
+        QString y_str;
+        y_str.setNum(y);
         for (uint x = 0; x < node_visibility_width; ++x)
         {
+            QString x_str;
+            x_str.setNum(x);
+
             bool value;
-            StreamUtils::readBool(stream, &value);
+            load_context.readBool(&value, QString("_node_visibility[") + y_str + "][" + x_str + "]");
 
             _node_visibility[y][x] = value;
         }
+    }
     DV(("Playground::load: node_visibility finished"));
 
     // _action_mode
     uint action_mode_uint;
-    StreamUtils::readUInt(stream, &action_mode_uint);
+    load_context.readUInt(&action_mode_uint, "_action_mode");
     _action_mode = ActionMode(action_mode_uint);
-    DV(("Playground::load: action_mode %d", action_mode_uint));
 
     // _action_mode_related_hero
     uint ref_id;
-    StreamUtils::readUInt(stream, &ref_id);
+    load_context.readUInt(&ref_id, "ref_id for _action_mode_related_hero");
     _action_mode_related_hero = 0;
     if (ref_id != UINT_MAX)
     {
@@ -1261,11 +1279,11 @@ bool Playground::load(istream& stream)
     {
         delete _quest_board;
         _quest_board = new QuestBoard();
-        _quest_board->load(stream);
+        _quest_board->load(load_context);
     }
     DV(("Playground::load: QuestBoard loaded"));
 
-    return !stream.fail();
+    return !load_context.fail();
 }
 
 bool Playground::loadImagesAndAdjustPointers()

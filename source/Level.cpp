@@ -3,7 +3,8 @@
 #include "Level.h"
 
 #include <fstream>
-#include <strstream>
+#include <sstream>
+#include <string>
 #include <algorithm>
 
 #include <QtWidgets/QDialog>
@@ -11,6 +12,7 @@
 #include <QtCore/QFileInfo>
 #include <QtCore/QString>
 
+#include "Preferences.h"
 #include "Hero.h"
 #include "HeroQuestLevelWindow.h"
 #include "Debug.h"
@@ -29,6 +31,8 @@
 #include "EventBlockingContext.h"
 #include "TreasureCardStorage.h"
 #include "HeroCamp.h"
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 using namespace std;
 
@@ -94,56 +98,34 @@ void Level::ActionStates::set(const SetType& set_type)
     }
 }
 
-bool Level::ActionStates::save(std::ostream& stream) const
+bool Level::ActionStates::save(SaveContext& save_context) const
 {
-    char has_acted_at_all_char = char(_has_acted_at_all);
-    stream.write(&has_acted_at_all_char, sizeof(has_acted_at_all_char));
+    SaveContext::OpenChapter open_chapter(save_context, "ActionStates");
 
-    char has_moved_char = _has_moved;
-    stream.write(&has_moved_char, sizeof(has_moved_char));
+    save_context.writeBool(_has_acted_at_all, "_has_acted_at_all");
+    save_context.writeBool(_has_moved, "_has_moved");
+    save_context.writeUInt(_num_attacks_left, "_num_attacks_left");
+    save_context.writeBool(_has_cast_spell, "_has_cast_spell");
+    save_context.writeUInt(_num_spell_casts_left, "_num_spell_casts_left");
+    save_context.writeUInt(_move_points, "_move_points");
+    save_context.writeBool(_sleeping, "_sleeping");
 
-    stream.write((char*)&_num_attacks_left, sizeof(_num_attacks_left));
-
-    char has_cast_spell_char = _has_cast_spell;
-    stream.write(&has_cast_spell_char, sizeof(has_cast_spell_char));
-
-    stream.write((char*)&_num_spell_casts_left, sizeof(_num_spell_casts_left));
-
-    stream.write((char*)&_move_points, sizeof(_move_points));
-
-    char sleeping_char = _sleeping;
-    stream.write(&sleeping_char, sizeof(sleeping_char));
-
-    return !stream.fail();
+    return !save_context.fail();
 }
 
-bool Level::ActionStates::load(std::istream& stream)
+bool Level::ActionStates::load(LoadContext& load_context)
 {
-    char buffer_char[sizeof(char)];
-    char buffer_uint[sizeof(uint)];
+    LoadContext::OpenChapter open_chapter(load_context, "Level::ActionStates");
 
-    stream.read((char*)buffer_char, sizeof(char));
-    _has_acted_at_all = bool(*buffer_char);
+    load_context.readBool(&_has_acted_at_all, "_has_acted_at_all");
+    load_context.readBool(&_has_moved, "_has_moved");
+    load_context.readUInt(&_num_attacks_left, "_num_attacks_left");
+    load_context.readBool(&_has_cast_spell, "_has_cast_spell");
+    load_context.readUInt(&_num_spell_casts_left, "_num_spell_casts_left");
+    load_context.readUInt(&_move_points, "_move_points");
+    load_context.readBool(&_sleeping, "_sleeping");
 
-    stream.read((char*)buffer_char, sizeof(char));
-    _has_moved = bool(*buffer_char);
-
-    stream.read((char*)buffer_uint, sizeof(uint));
-    _num_attacks_left = *((uint*)(buffer_uint));
-
-    stream.read((char*)buffer_char, sizeof(char));
-    _has_cast_spell = bool(*buffer_char);
-
-    stream.read((char*)buffer_uint, sizeof(uint));
-    _num_spell_casts_left = *((uint*)(buffer_uint));
-
-    stream.read((char*)buffer_uint, sizeof(uint));
-    _move_points = *((uint*)(buffer_uint));
-
-    stream.read((char*) buffer_char, sizeof(char));
-    _sleeping = bool(*buffer_char);
-
-    return !stream.fail();
+    return !load_context.fail();
 }
 
 // ==================================================================
@@ -193,55 +175,49 @@ void Level::HeroActionStates::set(const SetType& set_type)
     }
 }
 
-bool Level::HeroActionStates::save(std::ostream& stream) const
+bool Level::HeroActionStates::save(SaveContext& save_context) const
 {
-    Parent::save(stream);
+    SaveContext::OpenChapter open_chapter(save_context, "HeroActionStates");
 
-    char has_searched_char = char(_has_searched);
-    stream.write(&has_searched_char, sizeof(has_searched_char));
+    Parent::save(save_context);
 
-    char has_thrown_movement_dice_char = char(_has_thrown_movement_dice);
-    stream.write(&has_thrown_movement_dice_char, sizeof(has_thrown_movement_dice_char));
+    save_context.writeBool(_has_searched, "_has_searched");
+    save_context.writeBool(_has_thrown_movement_dice, "_has_thrown_movement_dice");
+    save_context.writeBool(_may_cross_monsters_during_movement, "_may_cross_monsters_during_movement");
 
-    char may_cross_monsters_during_movement_char = char(_may_cross_monsters_during_movement);
-    stream.write(&may_cross_monsters_during_movement_char, sizeof(may_cross_monsters_during_movement_char));
-
-    StreamUtils::writeUInt(stream, _dice_results.size());
+    save_context.writeUInt(_dice_results.size(), "_dice_results.size()");
     for (uint i = 0; i < _dice_results.size(); ++i)
     {
-        StreamUtils::writeUInt(stream, _dice_results[i]);
+        QString i_str;
+        i_str.setNum(i);
+        save_context.writeUInt(_dice_results[i], QString("_dice_results[") + i_str + "]");
     }
 
-    return !stream.fail();
+    return !save_context.fail();
 }
 
-bool Level::HeroActionStates::load(std::istream& stream)
+bool Level::HeroActionStates::load(LoadContext& load_context)
 {
-    Parent::load(stream);
+    LoadContext::OpenChapter open_chapter(load_context, "Level::HeroActionStates");
 
-    char buffer_char[sizeof(char)];
+    Parent::load(load_context);
 
-    stream.read((char*)buffer_char, sizeof(char));
-    _has_searched = bool(*buffer_char);
-
-    stream.read((char*)buffer_char, sizeof(char));
-    _has_thrown_movement_dice = bool(*buffer_char);
-
-    stream.read((char*) buffer_char, sizeof(char));
-    _may_cross_monsters_during_movement = bool(*buffer_char);
+    load_context.readBool(&_has_searched, "_has_searched");
+    load_context.readBool(&_has_thrown_movement_dice, "_has_thrown_movement_dice");
+    load_context.readBool(&_may_cross_monsters_during_movement, "_may_cross_monsters_during_movement");
 
     _dice_results.clear();
     uint num_dice_results;
-    StreamUtils::readUInt(stream, &num_dice_results);
+    load_context.readUInt(&num_dice_results, "_dice_results.size()");
     _dice_results.reserve(num_dice_results);
     for (uint i = 0; i < num_dice_results; ++i)
     {
         uint dice_result;
-        StreamUtils::readUInt(stream, &dice_result);
+        load_context.readUInt(&dice_result, "dice_result");
         _dice_results.push_back(dice_result);
     }
 
-    return !stream.fail();
+    return !load_context.fail();
 }
 
 // ==================================================================
@@ -265,82 +241,90 @@ void Level::MonsterActionStates::reset()
     ActionStates::reset();
 }
 
-bool Level::MonsterActionStates::save(std::ostream& stream) const
+bool Level::MonsterActionStates::save(SaveContext& save_context) const
 {
-    Parent::save(stream);
+    SaveContext::OpenChapter open_chapter(save_context, "MonsterActionStates");
 
-    return !stream.fail();
+    Parent::save(save_context);
+
+    return !save_context.fail();
 }
 
-bool Level::MonsterActionStates::load(std::istream& stream)
+bool Level::MonsterActionStates::load(LoadContext& load_context)
 {
-    Parent::load(stream);
+    LoadContext::OpenChapter open_chapter(load_context, "Level::MonsterActionStates");
 
-    return !stream.fail();
+    Parent::load(load_context);
+
+    return !load_context.fail();
 }
 
 // ==================================================================
 
-bool Level::LevelState::save(ostream& stream) const
+bool Level::LevelState::save(SaveContext& save_context) const
 {
-    StreamUtils::writeUInt(stream, _round_no);
-    StreamUtils::writeUInt(stream, _current_hero_idx);
-    StreamUtils::writeUInt(stream, _current_monster_idx);
+    SaveContext::OpenChapter open_chapter(save_context, "LevelState");
 
-    StreamUtils::writeUInt(stream, _hero_action_states.size());
+    save_context.writeUInt(_round_no, "_round_no");
+    save_context.writeUInt(_current_hero_idx, "_current_hero_idx");
+    save_context.writeUInt(_current_monster_idx, "_current_monster_idx");
+
+    save_context.writeUInt(_hero_action_states.size(), "_hero_action_states.size()");
     for (vector<HeroActionStates>::const_iterator it = _hero_action_states.begin(); it != _hero_action_states.end(); ++it)
-        it->save(stream);
+        it->save(save_context);
 
-    StreamUtils::writeUInt(stream, _monster_action_states.size());
+    save_context.writeUInt(_monster_action_states.size(), "_monster_action_states.size()");
     for (vector<MonsterActionStates>::const_iterator it = _monster_action_states.begin(); it != _monster_action_states.end(); ++it)
-        it->save(stream);
+        it->save(save_context);
 
-    StreamUtils::writeUInt(stream, _num_turns_left.size());
+    save_context.writeUInt(_num_turns_left.size(), "_num_turns_left.size()");
     for (vector<uint>::const_iterator it = _num_turns_left.begin(); it != _num_turns_left.end(); ++it)
-        StreamUtils::writeUInt(stream, *it);
+        save_context.writeUInt(*it, "_num_turns_left[i]");
 
-    StreamUtils::writeBool(stream, _heroes_may_exit_level_via_stairway);
+    save_context.writeBool(_heroes_may_exit_level_via_stairway, "_heroes_may_exit_level_via_stairway");
 
-    return !stream.fail();
+    return !save_context.fail();
 }
 
-bool Level::LevelState::load(istream& stream)
+bool Level::LevelState::load(LoadContext& load_context)
 {
-    StreamUtils::readUInt(stream, &_round_no);
-    StreamUtils::readUInt(stream, &_current_hero_idx);
-    StreamUtils::readUInt(stream, &_current_monster_idx);
+    LoadContext::OpenChapter open_chapter(load_context, "Level");
+
+    load_context.readUInt(&_round_no, "_round_no");
+    load_context.readUInt(&_current_hero_idx, "_current_hero_idx");
+    load_context.readUInt(&_current_monster_idx, "_current_monster_idx");
 
     _hero_action_states.clear();
     uint num_hero_action_states;
-    StreamUtils::readUInt(stream, &num_hero_action_states);
+    load_context.readUInt(&num_hero_action_states, "_hero_action_states.size()");
     for (uint i = 0; i < num_hero_action_states; ++i)
     {
         _hero_action_states.push_back(HeroActionStates());
-        _hero_action_states.back().load(stream);
+        _hero_action_states.back().load(load_context);
     }
 
     _monster_action_states.clear();
     uint num_monster_action_states;
-    StreamUtils::readUInt(stream, &num_monster_action_states);
+    load_context.readUInt(&num_monster_action_states, "_monster_action_states.size()");
     for (uint i = 0; i < num_monster_action_states; ++i)
     {
         _monster_action_states.push_back(MonsterActionStates());
-        _monster_action_states.back().load(stream);
+        _monster_action_states.back().load(load_context);
     }
 
     _num_turns_left.clear();
     uint num_num_turns_left;
-    StreamUtils::readUInt(stream, &num_num_turns_left);
+    load_context.readUInt(&num_num_turns_left, "_num_turns_left.size()");
     for (uint i = 0; i < num_num_turns_left; ++i)
     {
         uint num;
-        StreamUtils::readUInt(stream, &num);
+        load_context.readUInt(&num, "num for _num_turns_left");
         _num_turns_left.push_back(num);
     }
 
-    StreamUtils::readBool(stream, &_heroes_may_exit_level_via_stairway);
+    load_context.readBool(&_heroes_may_exit_level_via_stairway, "_heroes_may_exit_level_via_stairway");
 
-    return !stream.fail();
+    return !load_context.fail();
 }
 
 // ==================================================================
@@ -487,20 +471,22 @@ void Level::startRound()
 
     startHeroTurn();
 
-    debugModeSaveGames();
+    autoSave();
 }
 
 /*!
- * If DEBUG_MODE_SAVE_GAMES is defined, this method saves the game (called at beginning of each round);
- * the save game file is saved sequentially in DEBUG_MODE_SAVE_GAMES_DIR.
+ * If Preferences::ENABLE_AUTOSAVE is true, this method auto-saves the game at beginning of each round;
+ * the save game file is saved in Preferences::AUTOSAVE_DIR.
  */
-void Level::debugModeSaveGames()
+void Level::autoSave()
 {
-#ifdef DEBUG_MODE_SAVE_GAMES
-    QDir savegame_basedir(DEBUG_MODE_SAVE_GAMES_DIR);
+    if (!Preferences::ENABLE_AUTOSAVE)
+        return;
+
+    QDir savegame_basedir(Preferences::AUTOSAVE_DIR);
     if (!savegame_basedir.exists())
     {
-        savegame_basedir.mkdir(DEBUG_MODE_SAVE_GAMES_DIR);
+        savegame_basedir.mkdir(Preferences::AUTOSAVE_DIR);
     }
 
     static uint num_round = 0;
@@ -510,7 +496,7 @@ void Level::debugModeSaveGames()
     if (num_round == 1)
     {
         // are there any non-dir files?
-        QDir dir(DEBUG_MODE_SAVE_GAMES_DIR);
+        QDir dir(Preferences::AUTOSAVE_DIR);
         dir.setFilter(QDir::Files | QDir::NoSymLinks);
         QFileInfoList filesList = dir.entryInfoList();
         if (!filesList.empty())
@@ -553,7 +539,7 @@ void Level::debugModeSaveGames()
                 //cout << "new_endnumber: " << new_endnumber << endl;
             }
             // have the new_endnumber => create new subdir and move existing files there
-            QDir tmp_dir(DEBUG_MODE_SAVE_GAMES_DIR);
+            QDir tmp_dir(Preferences::AUTOSAVE_DIR);
             QString new_subdir = QString(tmp_base.c_str()) + QString::number(new_endnumber);
             //cout << "creating new_subdir: " << qPrintable(new_subdir) << endl;
             tmp_dir.mkdir(new_subdir);
@@ -568,13 +554,17 @@ void Level::debugModeSaveGames()
     }
 
     stringstream str_stream;
-    str_stream << DEBUG_MODE_SAVE_GAMES_DIR << "/round_" << num_round << ".hqsg";
+    str_stream << qPrintable(Preferences::AUTOSAVE_DIR) << "/round_" << num_round << ".hqsg";
     string savegame_filename;
     str_stream >> savegame_filename;
-    ofstream outfile(savegame_filename.c_str(), ios::binary);
-    HeroQuestLevelWindow::_hero_quest->save(outfile);
-    outfile.close();
-#endif
+    QString savegame_filename_qstring(savegame_filename.c_str());
+
+    SaveContext save_context(savegame_filename_qstring,
+            Preferences::ENABLE_SAVE_LOAD_LOG ? SaveContext::ENABLE_LOG : SaveContext::DISABLE_LOG);
+    if (save_context.fail())
+        return;
+
+    HeroQuestLevelWindow::_hero_quest->save(save_context);
 }
 
 Creature* Level::getCurrentlyActingCreature()
@@ -1567,7 +1557,8 @@ void Level::searchTrapsButtonClicked()
 
 	// compute the viewable nodes
 	set<NodeID> viewable_nodes;
-	HeroQuestLevelWindow::_hero_quest->getPlayground()->computeViewableNodes(*pos_current_hero, false, &viewable_nodes); // false: do not respect target node border (used for finding secret doors and traps)
+    HeroQuestLevelWindow::_hero_quest->getPlayground()->computeViewableNodes(*pos_current_hero, false, true,
+            &viewable_nodes); // false: do not respect target node border (used for finding secret doors and traps); true: view through heroes
 
 	// open all SecretDoors which are viewable from the current hero's position
 	vector<SecretDoor*> viewable_secret_doors;
@@ -1598,6 +1589,24 @@ void Level::searchTrapsButtonClicked()
 	HeroQuestLevelWindow::_hero_quest->getPlayground()->update();
 
 	HeroQuestLevelWindow::_hero_quest->updateButtons();
+}
+
+/*!
+ * Switches from reachable_area view to searchable_area view.
+ */
+void Level::searchTrapsButtonPressed()
+{
+    HeroQuestLevelWindow::_hero_quest->getPlayground()->getQuestBoard()->computeSearchableArea();
+    HeroQuestLevelWindow::_hero_quest->getPlayground()->update();
+}
+
+/*!
+ * Switches from searchable_area view to reachable_area view.
+ */
+void Level::searchTrapsButtonReleased()
+{
+    HeroQuestLevelWindow::_hero_quest->getPlayground()->getQuestBoard()->clearSearchableArea();
+    HeroQuestLevelWindow::_hero_quest->getPlayground()->update();
 }
 
 void Level::searchTreasuresButtonClicked()
@@ -2469,92 +2478,100 @@ Chest* Level::getNextChestOfRoom(uint room_id, ChestOpenState open_state)
     return 0;
 }
 
-bool Level::save(ostream& stream) const
+bool Level::save(SaveContext& save_context) const
 {
-    StreamUtils::writeUInt(stream, _acting_heroes.size());
+    SaveContext::OpenChapter open_chapter(save_context, "Level");
+
+    save_context.writeUInt(_acting_heroes.size(), "_acting_heroes.size()");
     for (uint i = 0; i < _acting_heroes.size(); ++i)
     {
-        StreamUtils::write(stream, _acting_heroes[i]->getName());
+        QString i_str;
+        i_str.setNum(i);
+        save_context.writeString(_acting_heroes[i]->getName(),
+                QString("_acting_heroes[") + i_str + "]->getName()");
     }
 
-    _level_state.save(stream);
+    _level_state.save(save_context);
 
-    StreamUtils::writeUInt(stream, _delayed_heroes.size());
+    save_context.writeUInt(_delayed_heroes.size(), "_delayed_heroes.size()");
     for (set<Hero*>::const_iterator it_delayed_heroes = _delayed_heroes.begin();
             it_delayed_heroes != _delayed_heroes.end(); ++it_delayed_heroes)
     {
-        StreamUtils::writeUInt(stream, (*it_delayed_heroes)->getReferencingID());
+        save_context.writeUInt((*it_delayed_heroes)->getReferencingID(), "delayed_hero->getReferencingID()");
     }
 
-    StreamUtils::writeUInt(stream, _monsters.size());
+    save_context.writeUInt(_monsters.size(), "_monsters.size()");
     for (uint i = 0; i < _monsters.size(); ++i)
     {
-        StreamUtils::write(stream, Monster::getName(_monsters[i]));
-        _monsters[i]->save(stream);
+        save_context.writeString(Monster::getName(_monsters[i]), "Monster::getName(_monsters[i])");
+        _monsters[i]->save(save_context);
     }
 
-    StreamUtils::writeUInt(stream, _doors.size());
+    save_context.writeUInt(_doors.size(), "_doors.size()");
     for (uint i = 0; i < _doors.size(); ++i)
     {
-        StreamUtils::write(stream, Door::getName(_doors[i]));
-        _doors[i]->save(stream);
+        save_context.writeString(Door::getName(_doors[i]), "Door::getName(_doors[i])");
+        _doors[i]->save(save_context);
     }
 
-    StreamUtils::writeUInt(stream, _traps.size());
+    save_context.writeUInt(_traps.size(), "_traps.size()");
     for (uint i = 0; i < _traps.size(); ++i)
     {
-        StreamUtils::write(stream, Trap::getName(_traps[i]));
-        _traps[i]->save(stream);
+        save_context.writeString(Trap::getName(_traps[i]), "Trap::getName(_traps[i])");
+        _traps[i]->save(save_context);
     }
 
-    StreamUtils::writeUInt(stream, _decoration.size());
+    save_context.writeUInt(_decoration.size(), "_decoration.size()");
     for (uint i = 0; i < _decoration.size(); ++i)
     {
-        StreamUtils::write(stream, Decoration::getName(_decoration[i]));
-        _decoration[i]->save(stream);
+        save_context.writeString(Decoration::getName(_decoration[i]), "Decoration::getName(_decoration[i])");
+        _decoration[i]->save(save_context);
     }
 
-    StreamUtils::writeUInt(stream, _treasure_card_stock.size());
+    save_context.writeUInt(_treasure_card_stock.size(), "_treasure_card_stock.size()");
     for (list<TreasureCard>::const_iterator it = _treasure_card_stock.begin(); it != _treasure_card_stock.end(); ++it)
     {
-        it->save(stream);
+        it->save(save_context);
     }
 
-    StreamUtils::writeUInt(stream, _treasure_card_deposition.size());
+    save_context.writeUInt(_treasure_card_deposition.size(), "_treasure_card_deposition.size()");
     for (list<TreasureCard>::const_iterator it = _treasure_card_deposition.begin(); it != _treasure_card_deposition.end(); ++it)
     {
-        it->save(stream);
+        it->save(save_context);
     }
 
-    StreamUtils::writeUInt(stream, _chest_pos_to_treasure_description.size());
+    save_context.writeUInt(_chest_pos_to_treasure_description.size(), "_chest_pos_to_treasure_description.size()");
     for (map<NodeID, TreasureDescription>::const_iterator it = _chest_pos_to_treasure_description.begin();
             it != _chest_pos_to_treasure_description.end(); ++it)
     {
-        it->first.save(stream);
-        it->second.save(stream);
+        it->first.save(save_context);
+        it->second.save(save_context);
     }
 
-    StreamUtils::writeUInt(stream, _non_chest_room_ids_treasures_searched.size());
+    save_context.writeUInt(_non_chest_room_ids_treasures_searched.size(),
+            "_non_chest_room_ids_treasures_searched.size()");
     for (set<uint>::const_iterator it = _non_chest_room_ids_treasures_searched.begin(); it != _non_chest_room_ids_treasures_searched.end(); ++it)
     {
-        StreamUtils::writeUInt(stream, *it);
+        save_context.writeUInt(*it, "_non_chest_room_ids_treasures_searched[i]");
     }
 
-    return !stream.fail();
+    return !save_context.fail();
 }
 
-bool Level::load(istream& stream)
+bool Level::load(LoadContext& load_context)
 {
+    LoadContext::OpenChapter open_chapter(load_context, "Level");
+
     // _acting_heroes
     DV(("Level::load: loading heroes..."));
     _acting_heroes.clear();
     vector<Hero*>& heroes = HeroQuestLevelWindow::_hero_quest->getHeroes();
     uint num_acting_heroes;
-    StreamUtils::readUInt(stream, &num_acting_heroes);
+    load_context.readUInt(&num_acting_heroes, "_acting_heroes.size()");
     for (uint i = 0; i < num_acting_heroes; ++i)
     {
         QString hero_name;
-        StreamUtils::read(stream, &hero_name);
+        load_context.readString(&hero_name, "hero_name");
 
         bool found = false;
         for (uint j = 0; j < heroes.size(); ++j)
@@ -2574,15 +2591,17 @@ bool Level::load(istream& stream)
     }
 
     DV(("Level::load: loading level_state..."));
-    _level_state.load(stream);
+    _level_state.load(load_context);
 
     _delayed_heroes.clear();
     uint num_delayed_heroes;
-    StreamUtils::readUInt(stream, &num_delayed_heroes);
+    load_context.readUInt(&num_delayed_heroes, "_delayed_heroes.size()");
     for (uint i = 0; i < num_delayed_heroes; ++i)
     {
         uint hero_referencing_id;
-        StreamUtils::readUInt(stream, &hero_referencing_id);
+        QString i_str;
+        i_str.setNum(i);
+        load_context.readUInt(&hero_referencing_id, QString("delayed hero ") + i_str + " referencing id");
 
         // find hero in vector
         Hero* target_hero = 0;
@@ -2604,11 +2623,11 @@ bool Level::load(istream& stream)
     // _monsters
     deleteMonsters();
     uint num_monsters;
-    StreamUtils::readUInt(stream, &num_monsters);
+    load_context.readUInt(&num_monsters, "_monsters.size()");
     for (uint i = 0; i < num_monsters; ++i)
     {
         QString monster_name;
-        StreamUtils::read(stream, &monster_name);
+        load_context.readString(&monster_name, "monster_name");
         //DVX(("read monster name: %s", qPrintable(monster_name)));
 
         Monster* monster = createMonster(monster_name);
@@ -2617,97 +2636,99 @@ bool Level::load(istream& stream)
             DVX(("Could not create monster \"%s\".", qPrintable(monster_name)));
             return false;
         }
-        monster->load(stream);
+        monster->load(load_context);
         _monsters.push_back(monster);
     }
 
     // doors
     deleteDoors();
     uint num_doors;
-    StreamUtils::readUInt(stream, &num_doors);
+    load_context.readUInt(&num_doors, "_doors.size()");
     for (uint i = 0; i < num_doors; ++i)
     {
         QString door_name;
-        StreamUtils::read(stream, &door_name);
+        load_context.readString(&door_name, "door_name");
         Door* door = createDoor(door_name);
-        door->load(stream);
+        door->load(load_context);
         _doors.push_back(door);
     }
 
     // traps
     deleteTraps();
     uint num_traps;
-    StreamUtils::readUInt(stream, &num_traps);
+    load_context.readUInt(&num_traps, "_traps.size()");
     for (uint i = 0; i < num_traps; ++i)
     {
         QString trap_name;
-        StreamUtils::read(stream, &trap_name);
+        load_context.readString(&trap_name, "trap_name");
         Trap* trap = createTrap(trap_name);
-        trap->load(stream);
+        trap->load(load_context);
         _traps.push_back(trap);
     }
 
     // decoration:
     deleteDecoration();
     uint num_decoration;
-    StreamUtils::readUInt(stream, &num_decoration);
+    load_context.readUInt(&num_decoration, "_decoration.size()");
     for (uint i = 0; i < num_decoration; ++i)
     {
         QString decoration_name;
-        StreamUtils::read(stream, &decoration_name);
+        load_context.readString(&decoration_name, "decoration_name");
         Decoration* decoration = createDecoration(decoration_name);
-        decoration->load(stream);
+        decoration->load(load_context);
         _decoration.push_back(decoration);
     }
 
     // treasure cards
     _treasure_card_stock.clear();
     uint num_treasure_cards_stock;
-    StreamUtils::readUInt(stream, &num_treasure_cards_stock);
+    load_context.readUInt(&num_treasure_cards_stock, "_treasure_card_stock.size()");
     for (uint i = 0; i < num_treasure_cards_stock; ++i)
     {
         TreasureCard treasure_card;
-        treasure_card.load(stream);
+        treasure_card.load(load_context);
         _treasure_card_stock.push_back(treasure_card);
     }
 
     _treasure_card_deposition.clear();
     uint num_treasure_cards_deposition;
-    StreamUtils::readUInt(stream, &num_treasure_cards_deposition);
+    load_context.readUInt(&num_treasure_cards_deposition, "_treasure_card_deposition.size()");
     for (uint i = 0; i < num_treasure_cards_deposition; ++i)
     {
         TreasureCard treasure_card;
-        treasure_card.load(stream);
+        treasure_card.load(load_context);
         _treasure_card_deposition.push_back(treasure_card);
     }
 
     _chest_pos_to_treasure_description.clear();
     uint num_chests;
-    StreamUtils::readUInt(stream, &num_chests);
+    load_context.readUInt(&num_chests, "_chest_pos_to_treasure_description.size()");
     for (uint i = 0; i < num_chests; ++i)
     {
         NodeID node_id;
-        node_id.load(stream);
+        node_id.load(load_context);
 
         TreasureDescription treasure_description;
-        treasure_description.load(stream);
+        treasure_description.load(load_context);
         _chest_pos_to_treasure_description[node_id] = treasure_description;
     }
 
     // _room_ids_treasures_searched
     _non_chest_room_ids_treasures_searched.clear();
     uint num_room_ids_treasures_searched;
-    StreamUtils::readUInt(stream, &num_room_ids_treasures_searched);
-    for (set<uint>::const_iterator it = _non_chest_room_ids_treasures_searched.begin(); it != _non_chest_room_ids_treasures_searched.end(); ++it)
+    load_context.readUInt(&num_room_ids_treasures_searched, "_non_chest_room_ids_treasures_searched.size()");
+    for (uint i = 0; i < num_room_ids_treasures_searched; ++i)
     {
         uint room_id;
-        StreamUtils::readUInt(stream, &room_id);
+        QString i_str;
+        i_str.setNum(i);
+        load_context.readUInt(&room_id, "room_id [" + i_str + "] for _non_chest_room_ids_treasures_searched");
         _non_chest_room_ids_treasures_searched.insert(room_id);
     }
 
     // _roaming_monster_templates: already created in Level constructor
 
-    return !stream.fail();
+    return !load_context.fail();
 }
 
 /*!

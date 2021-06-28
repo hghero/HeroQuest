@@ -10,6 +10,8 @@
 #include "Debug.h"
 
 struct GameState;
+class SaveContext;
+class LoadContext;
 
 class HeroCamp
 {
@@ -21,10 +23,10 @@ public:
     void createHeroes(const std::vector<QString>& hero_names, SpellCard::SpellFamily alb_spell_family);
 
     void getHeroes(std::vector<Hero*>* heroes);
-    bool heroesCanByEquipment() const;
+    bool heroesCanBuyEquipment() const;
 
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream, const GameState& game_state);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context, const GameState& game_state);
 
     void redistributeSpellCardsToHeroes();
 

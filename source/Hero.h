@@ -7,6 +7,9 @@
 #include "Inventory.h"
 #include "SpellCard.h"
 
+class SaveContext;
+class LoadContext;
+
 // ==================================================================
 
 class Hero : public Creature
@@ -52,8 +55,8 @@ public:
 	bool checkDefend();
 	bool checkDeath();
 
-	virtual bool save(std::ostream& stream) const;
-	virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
 
 	void updateTreasureImages();
 

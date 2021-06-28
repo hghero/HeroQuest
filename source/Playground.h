@@ -20,6 +20,8 @@ class SecretDoor;
 class Trap;
 class QMouseEvent;
 class Door;
+class SaveContext;
+class LoadContext;
 
 // ==================================================================
 
@@ -96,7 +98,8 @@ class Playground : public QLabel
 
     bool nodeIsOnStairway(const NodeID& node_id) const;
 
-	void computeViewableNodes(const NodeID& node_id, bool respect_target_node_border, std::set<NodeID>* viewable_nodes) const;
+    void computeViewableNodes(const NodeID& node_id, bool respect_target_node_border, bool view_through_heroes,
+            std::set<NodeID>* viewable_nodes) const;
 	void computeViewableSecretDoors(const std::set<NodeID>& viewable_nodes, std::vector<SecretDoor*>* viewable_secret_doors) const;
 	void computeViewableTraps(const std::set<NodeID>& viewable_nodes, std::vector<Trap*>* viewable_traps) const;
 
@@ -142,8 +145,8 @@ class Playground : public QLabel
 	void updateFieldVisibility();
     void makeAllRelevantNodesVisible();
 
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
     bool loadImagesAndAdjustPointers();
 
 private:

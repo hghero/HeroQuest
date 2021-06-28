@@ -3,6 +3,9 @@
 
 #include <iostream>
 
+class SaveContext;
+class LoadContext;
+
 /*!
  * An item storable in a hero's inventory.
  */
@@ -16,8 +19,8 @@ class InventoryItem
     virtual bool isSpellCard() const;
     virtual bool isEquipmentCard() const;
 
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
 };
 
 #endif

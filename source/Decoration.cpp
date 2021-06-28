@@ -12,7 +12,8 @@
 #include "StreamUtils.h"
 #include "Playground.h"
 #include "ParameterStorage.h"
-
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 using namespace std;
 
@@ -280,41 +281,45 @@ QString Decoration::getName(const Decoration* decoration)
     return name;
 }
 
-bool Decoration::save(std::ostream& stream) const
+bool Decoration::save(SaveContext& save_context) const
 {
-    Parent::save(stream);
+    SaveContext::OpenChapter open_chapter(save_context, "Decoration");
+
+    Parent::save(save_context);
 
     // _visible
-    StreamUtils::writeBool(stream, _visible);
+    save_context.writeBool(_visible, "_visible");
 
     // _node_top_left
-    _node_top_left.save(stream);
+    _node_top_left.save(save_context);
 
     // _node_bottom_right
-    _node_bottom_right.save(stream);
+    _node_bottom_right.save(save_context);
 
     // _orientation
-    StreamUtils::writeUInt(stream, uint(_orientation));
+    save_context.writeUInt(uint(_orientation), "_orientation");
 
-    return !stream.fail();
+    return !save_context.fail();
 }
 
-bool Decoration::load(std::istream& stream)
+bool Decoration::load(LoadContext& load_context)
 {
-    Parent::load(stream);
+    LoadContext::OpenChapter open_chapter(load_context, "Decoration");
+
+    Parent::load(load_context);
 
     // _visible
-    StreamUtils::readBool(stream, &_visible);
+    load_context.readBool(&_visible, "_visible");
 
     // _node_top_left
-    _node_top_left.load(stream);
+    _node_top_left.load(load_context);
 
     // _node_bottom_right
-    _node_bottom_right.load(stream);
+    _node_bottom_right.load(load_context);
 
     // _orientation
     uint orientation_uint = 0;
-    StreamUtils::readUInt(stream, &orientation_uint);
+    load_context.readUInt(&orientation_uint, "_orientation");
     switch (orientation_uint)
     {
         case 0: _orientation = TURN_0;
@@ -330,7 +335,7 @@ bool Decoration::load(std::istream& stream)
                  break;
     }
 
-    return !stream.fail();
+    return !load_context.fail();
 }
 
 float Decoration::getRotationAngle() const

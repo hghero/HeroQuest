@@ -9,6 +9,8 @@
 #include "StreamUtils.h"
 #include "HeroQuestLevelWindow.h"
 #include "ParameterStorage.h"
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 
 using namespace std;
@@ -160,27 +162,31 @@ void SecretDoor::redraw(QPainter& painter)
     painter.restore();
 }
 
-bool SecretDoor::save(std::ostream& stream) const
+bool SecretDoor::save(SaveContext& save_context) const
 {
-    Parent::save(stream);
+    SaveContext::OpenChapter open_chapter(save_context, "SecretDoor");
 
-    StreamUtils::writeBool(stream, _visible);
-    StreamUtils::writeUInt(stream, uint(_draw_pos));
+    Parent::save(save_context);
 
-    return !stream.fail();
+    save_context.writeBool(_visible, "_visible");
+    save_context.writeUInt(uint(_draw_pos), "_draw_pos");
+
+    return !save_context.fail();
 }
 
-bool SecretDoor::load(std::istream& stream)
+bool SecretDoor::load(LoadContext& load_context)
 {
-    Parent::load(stream);
+    LoadContext::OpenChapter open_chapter(load_context, "SecretDoor");
 
-    StreamUtils::readBool(stream, &_visible);
+    Parent::load(load_context);
+
+    load_context.readBool(&_visible, "_visible");
 
     uint draw_pos_tmp;
-    StreamUtils::readUInt(stream, &draw_pos_tmp);
+    load_context.readUInt(&draw_pos_tmp, "_draw_pos");
     _draw_pos = (DrawPos)(draw_pos_tmp);
 
-    return !stream.fail();
+    return !load_context.fail();
 }
 
 /*!

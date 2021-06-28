@@ -9,6 +9,8 @@
 #include "TreasureDataTypes.h"
 
 class QPixmap;
+class SaveContext;
+class LoadContext;
 
 /*!
  * Needed to deal with TreasureCards before and after a level.
@@ -48,8 +50,8 @@ class TreasureCardStorage
     QPixmap* getTreasureCardImage(const TreasureDataTypes::TreasureImageID& id) const;
     QPixmap* getChest3DImage() const;
 
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
 
     static TreasureCardStorage* instance;
 

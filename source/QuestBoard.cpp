@@ -17,6 +17,8 @@
 #include "Level.h"
 #include "PainterContext.h"
 #include "ParameterStorage.h"
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 using namespace std;
 
@@ -35,6 +37,7 @@ QuestBoard::QuestBoard()
 	_room_ids(), // set in ::create
 	_movement_path(),
 	_reachable_area(),
+	_searchable_area(),
 	_attack_destination_valid(false),
 	_attack_destination(0, 0),
 	_destination_door_valid(false),
@@ -205,8 +208,10 @@ void QuestBoard::redraw(QPainter& painter)
 	// draw the attack destination
 	// -> moved to playground, because has to be done after redrawing creatures!
 
-    // draw the reachable area
+    // if _searchable_area is empty, draw reachable area; otherwise draw _searchable_area
+    if (_searchable_area.empty())
     {
+        // draw the reachable area
         PainterContext painter_context(painter);
         painter.setBrush(QBrush(QColor(0, 255, 0, 50), Qt::SolidPattern));
         painter.setPen(Qt::NoPen);
@@ -218,6 +223,23 @@ void QuestBoard::redraw(QPainter& painter)
             Vec2i corner0 = getFieldCorner0(reachable_node);
             Vec2i corner1 = getFieldCorner1(reachable_node);
             Vec2i corner2 = getFieldCorner2(reachable_node);
+            painter.drawRect(corner0.x, corner0.y, corner1.x - corner0.x, corner2.y - corner0.y);
+        }
+    }
+    else
+    {
+        // draw the searchable area
+        PainterContext painter_context(painter);
+        painter.setBrush(QBrush(QColor(255, 255, 0, 50), Qt::SolidPattern));
+        painter.setPen(Qt::NoPen);
+
+        for (set<NodeID>::const_iterator it_searchable_nodes = _searchable_area.begin();
+                it_searchable_nodes != _searchable_area.end(); ++it_searchable_nodes)
+        {
+            const NodeID& searchable_node = *it_searchable_nodes;
+            Vec2i corner0 = getFieldCorner0(searchable_node);
+            Vec2i corner1 = getFieldCorner1(searchable_node);
+            Vec2i corner2 = getFieldCorner2(searchable_node);
             painter.drawRect(corner0.x, corner0.y, corner1.x - corner0.x, corner2.y - corner0.y);
         }
     }
@@ -340,13 +362,15 @@ Vec2i QuestBoard::getFieldCorner(const NodeID& node_id, unsigned int corner_num)
  * Inserts all border lines (in screen pixel coordinates) of node_id into node_borders.
  *
  * If node_id is occupied by a creature, each border of node_id is inserted into node_borders.
+ * If ignore_heroes is true, this is only done for monsters.
  *
  * Furthermore, a node border exists between two direct geometrically neighboring nodes
  * if these nodes are no direct topological neighbors in the _board_graph (e. g., due to walls).
  * 
  * If use_ignore_field is true, then ignore_field adds only borders due to walls.
  */
-void QuestBoard::getBorderLinesOfNode(const NodeID& node_id, vector<Line>* node_borders, bool use_ignore_field, const NodeID* ignore_field) const
+void QuestBoard::getBorderLinesOfNode(const NodeID& node_id, bool ignore_heroes, vector<Line>* node_borders,
+        bool use_ignore_field, const NodeID* ignore_field) const
 {
 	const Node& node = _board_graph->getNode(node_id);
 
@@ -375,7 +399,8 @@ void QuestBoard::getBorderLinesOfNode(const NodeID& node_id, vector<Line>* node_
     Playground* playground = HeroQuestLevelWindow::_hero_quest->getPlayground();
 
 	// 1) is node_id occupied by a creature?
-    if (playground->getCreature(node_id) != 0)
+    const Creature* creature = playground->getCreature(node_id);
+    if (creature != 0 && (!ignore_heroes || creature->isMonster()))
 	{
 		// insert a border line for each geometric neighbor of node_id;
 		// if use_ignore_field is true and node_id == ignore_field, insert only lines due to walls
@@ -492,10 +517,12 @@ void QuestBoard::computeViewedFields(const NodeID& field, vector<NodeID>* viewed
 /*!
  * A field can be viewed from another field, if both are in the same room, or no obstacle
  * (walls, creatures) are in between the direct line between the two fields.
+ * If view_through_heroes is true, heroes are no such obstacles.
  *
  * \return True, if field2 can be viewed from field1; false otherwise.
  */
-bool QuestBoard::fieldCanBeViewedFromField(const NodeID& field1, const NodeID& field2, bool respect_field2_borders) const
+bool QuestBoard::fieldCanBeViewedFromField(const NodeID& field1, const NodeID& field2, bool respect_field2_borders,
+        bool view_through_heroes) const
 {
 	// a field can always see itself
 	if (field1 == field2)
@@ -536,7 +563,7 @@ bool QuestBoard::fieldCanBeViewedFromField(const NodeID& field1, const NodeID& f
 			node_borders.clear();
 
 			// omit field2, if respect_field2_borders is false
-			getBorderLinesOfNode(field, &node_borders, !respect_field2_borders, &field2);
+            getBorderLinesOfNode(field, view_through_heroes, &node_borders, !respect_field2_borders, &field2);
 
 			for (unsigned int i = 0; i < node_borders.size(); ++i)
 			{
@@ -932,6 +959,32 @@ void QuestBoard::clearReachableArea()
     _reachable_area.clear();
 }
 
+/*!
+ * Computes the _searchable_area based on the current hero's position.
+ * (_searchable_area must only be != empty as long as the user holds a search button pressed.)
+ */
+void QuestBoard::computeSearchableArea()
+{
+    Hero* hero = HeroQuestLevelWindow::_hero_quest->getLevel()->getCurrentlyActingHero();
+    if (hero == 0)
+    {
+        clearSearchableArea();
+        return;
+    }
+
+    const NodeID* pos_hero = HeroQuestLevelWindow::_hero_quest->getPlayground()->getCreaturePos(hero);
+
+    HeroQuestLevelWindow::_hero_quest->getPlayground()->computeViewableNodes(*pos_hero, false, true, &_searchable_area); // false: do not respect target node border (used for finding secret doors and traps); true: view through heroes
+}
+
+/*!
+ * Clears _searchable_area.
+ */
+void QuestBoard::clearSearchableArea()
+{
+    _searchable_area.clear();
+}
+
 void QuestBoard::setAttackDestination(int x, int y)
 {
 	_attack_destination_valid = false;
@@ -1081,54 +1134,58 @@ bool QuestBoard::contains(const NodeID& node_id) const
     return _board_graph->contains(node_id);
 }
 
-bool QuestBoard::save(std::ostream& stream) const
+bool QuestBoard::save(SaveContext& save_context) const
 {
     // _board_graph
-    _board_graph->save(stream);
+    _board_graph->save(save_context);
 
     // _room_ids
-    StreamUtils::writeUInt(stream, _room_ids.size());
+    save_context.writeUInt(_room_ids.size(), "_room_ids.size()");
     for (map<NodeID, uint>::const_iterator it = _room_ids.begin(); it != _room_ids.end(); ++it)
     {
-        it->first.save(stream);
-        StreamUtils::writeUInt(stream, it->second);
+        it->first.save(save_context);
+        save_context.writeUInt(it->second, "_room_ids[i]");
     }
 
     // _room_ids_reverse
-    StreamUtils::writeUInt(stream, _room_ids_reverse.size());
+    save_context.writeUInt(_room_ids_reverse.size(), "_room_ids_reverse.size()");
     for (map<uint, list<NodeID> >::const_iterator it = _room_ids_reverse.begin(); it != _room_ids_reverse.end(); ++it)
     {
-        StreamUtils::writeUInt(stream, it->first);
-        StreamUtils::write(stream, it->second);
+        save_context.writeUInt(it->first, "_room_ids_reverse[i].first");
+        save_context.writeNodeIDs(it->second, "_room_ids_reverse[i].second");
     }
 
     // _movement_path
-    StreamUtils::writeUInt(stream, _movement_path.size());
+    save_context.writeUInt(_movement_path.size(), "_movement_path.size()");
     for (vector<NodeID>::const_iterator it = _movement_path.begin(); it != _movement_path.end(); ++it)
     {
-        it->save(stream);
+        it->save(save_context);
     }
 
     // _reachable_area
-    StreamUtils::writeUInt(stream, _reachable_area.size());
+    save_context.writeUInt(_reachable_area.size(), "_reachable_area.size()");
     for (set<NodeID>::const_iterator it = _reachable_area.begin(); it != _reachable_area.end(); ++it)
     {
-        it->save(stream);
+        it->save(save_context);
     }
 
+    // _searchable_area: not saved
+
     // attacking
-    StreamUtils::writeBool(stream, _attack_destination_valid);
-    _attack_destination.save(stream);
+    save_context.writeBool(_attack_destination_valid, "_attack_destination_valid");
+    _attack_destination.save(save_context);
 
     // opening doors: irrelevant for save/load
     //StreamUtils::writeBool(stream, _destination_door_valid);
     //StreamUtils::writeUInt(stream, _destination_door->getReferencingID());
 
-    return !stream.fail();
+    return !save_context.fail();
 }
 
-bool QuestBoard::load(std::istream& stream)
+bool QuestBoard::load(LoadContext& load_context)
 {
+    LoadContext::OpenChapter open_chapter(load_context, "QuestBoard");
+
     // _orig_board_image
     // _scaled_board_image
     // _field_pos
@@ -1137,65 +1194,68 @@ bool QuestBoard::load(std::istream& stream)
     create();
 
     // _board_graph
-    _board_graph->load(stream);
+    _board_graph->load(load_context);
 
     // _room_ids
     uint num_room_ids;
-    StreamUtils::readUInt(stream, &num_room_ids);
+    load_context.readUInt(&num_room_ids, "_room_ids.size()");
     for (uint i = 0; i < num_room_ids; ++i)
     {
         NodeID node_id;
-        node_id.load(stream);
+        node_id.load(load_context);
 
         uint num;
-        StreamUtils::readUInt(stream, &num);
+        load_context.readUInt(&num, "num for _room_ids");
 
         _room_ids[node_id] = num;
     }
 
     // _room_ids_reverse
     uint num_room_ids_reverse;
-    StreamUtils::readUInt(stream, &num_room_ids_reverse);
+    load_context.readUInt(&num_room_ids_reverse, "_room_ids_reverse.size()");
     for (uint i = 0; i < num_room_ids_reverse; ++i)
     {
         uint num;
-        StreamUtils::readUInt(stream, &num);
+        load_context.readUInt(&num, "num for _room_ids_reverse");
 
         list<NodeID> node_ids;
-        StreamUtils::read(stream, &node_ids);
+        load_context.readNodeIDs(&node_ids, "node_ids for _room_ids_reverse");
 
         _room_ids_reverse[num] = node_ids;
     }
 
     uint num_movement_path;
-    StreamUtils::readUInt(stream, &num_movement_path);
+    load_context.readUInt(&num_movement_path, "_movement_path.size()");
     for (uint i = 0; i < num_movement_path; ++i)
     {
         NodeID node_id;
-        node_id.load(stream);
+        node_id.load(load_context);
 
         _movement_path.push_back(node_id);
     }
 
     uint num_reachable_area;
-    StreamUtils::readUInt(stream, &num_reachable_area);
+    load_context.readUInt(&num_reachable_area, "_reachable_area.size()");
     for (uint i = 0; i < num_reachable_area; ++i)
     {
         NodeID node_id;
-        node_id.load(stream);
+        node_id.load(load_context);
 
         _reachable_area.insert(node_id);
     }
 
+    // _searchable_area: not loaded
+    _searchable_area.clear();
+
     // attacking
-    StreamUtils::readBool(stream, &_attack_destination_valid);
-    _attack_destination.load(stream);
+    load_context.readBool(&_attack_destination_valid, "_attack_destination_valid");
+    _attack_destination.load(load_context);
 
     // irrelevant
     _destination_door_valid = false;
     _destination_door = 0;
 
-    return !stream.fail();
+    return !load_context.fail();
 }
 
 void QuestBoard::removeOccupiedFieldsFromEnd(vector<NodeID>* path) const
@@ -1427,7 +1487,8 @@ void QuestBoard::handleMouseEventInActionModeSelectFieldInVisualLineOfSight(QMou
         bool valid_field = getNodeID(Vec2i(event->pos().x(), event->pos().y()), &clicked_field);
         if (!valid_field || // valid field?
                 !nodesAreInSameRowOrColumn(clicked_field, *related_hero_node_id) || // same row or column?
-                !fieldCanBeViewedFromField(clicked_field, *related_hero_node_id, false /*respect_field2_borders*/)) // field can be viewed?
+                !fieldCanBeViewedFromField(clicked_field, *related_hero_node_id, false /*respect_field2_borders*/,
+                        true /*view_through_heroes*/)) // field can be viewed?
         {
             HeroQuestLevelWindow::_hero_quest->setUserSelectedNodeID(NodeID(-1, -1));
             return;

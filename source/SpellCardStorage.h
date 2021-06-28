@@ -8,6 +8,8 @@
 #include "SpellCard.h"
 
 class QPixmap;
+class SaveContext;
+class LoadContext;
 
 /*!
  * Needed to deal with SpellCards before a level has begun.
@@ -49,8 +51,8 @@ class SpellCardStorage
     QPixmap* getSpellCardBackImage(const SpellCard::SpellFamily& spell_family) const;
     QPixmap* getSpellCardImage(const SpellCard::SpellID& spell_id) const;
 
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
 
     static SpellCardStorage* instance;
 

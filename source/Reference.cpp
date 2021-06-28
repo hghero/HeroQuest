@@ -1,6 +1,8 @@
 #include "Reference.h"
 
 #include "StreamUtils.h"
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 using namespace std;
 
@@ -60,15 +62,19 @@ uint Reference::getReferencingID() const
     return _referencing_id;
 }
 
-bool Reference::save(ostream& stream) const
+bool Reference::save(SaveContext& save_context) const
 {
-    StreamUtils::writeUInt(stream, _referencing_id);
-    return !stream.fail();
+    SaveContext::OpenChapter open_chapter(save_context, "Reference");
+
+    save_context.writeUInt(_referencing_id, "_referencing_id");
+    return !save_context.fail();
 }
 
-bool Reference::load(istream& stream)
+bool Reference::load(LoadContext& load_context)
 {
-    StreamUtils::readUInt(stream, &_referencing_id); // TODO: if some element has been created with this ID before, then we get a conflict here!
+    LoadContext::OpenChapter open_chapter(load_context, "Reference");
+
+    load_context.readUInt(&_referencing_id, "_referencing_id"); // TODO: if some element has been created with this ID before, then we get a conflict here!
     ReferenceManager::get()->maximize(_referencing_id);
-    return !stream.fail();
+    return !load_context.fail();
 }

@@ -3,6 +3,8 @@
 
 #include "Level.h"
 
+class SaveContext;
+class LoadContext;
 
 class Level02SavingSirRagnar : public Level
 {
@@ -15,8 +17,8 @@ public:
 
     virtual QString getLevelBriefing() const;
 
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
 
     protected:
     virtual void fieldHasBeenReachedBy(const Creature* creature, const NodeID& node);

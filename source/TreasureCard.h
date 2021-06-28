@@ -5,6 +5,8 @@
 #include "TreasureDescription.h"
 
 class Hero;
+class SaveContext;
+class LoadContext;
 
 /*!
  * An item storable in a hero's inventory.
@@ -39,8 +41,8 @@ public:
 
 	TreasureCard::Characteristic getCharacteristic() const;
 
-    virtual bool save(std::ostream& stream) const;
-    virtual bool load(std::istream& stream);
+    virtual bool save(SaveContext& save_context) const;
+    virtual bool load(LoadContext& load_context);
 
     void updateTreasureImages();
 

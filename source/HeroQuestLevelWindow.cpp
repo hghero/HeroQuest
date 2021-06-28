@@ -19,7 +19,10 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QFileDialog>
 
+#include "Preferences.h"
 #include "Debug.h"
+#include "SaveContext.h"
+#include "LoadContext.h"
 #include "Hero.h"
 #include "HeroStatisticPane.h"
 #include "DiceRollPane.h"
@@ -671,33 +674,39 @@ bool HeroQuestLevelWindow::checkDeath(Hero* hero)
     return checkDeath(QVariant::fromValue(hero));
 }
 
-bool HeroQuestLevelWindow::save(std::ostream& stream) const
+bool HeroQuestLevelWindow::save(SaveContext& save_context) const
 {
-    _game_state->save(stream);
-    _spell_card_storage->save(stream);
-    _treasure_card_storage->save(stream);
-    _equipment_card_storage->save(stream);
-    _hero_camp.save(stream);
+    SaveContext::OpenChapter open_chapter(save_context, "HeroQuestLevelWindow");
 
-    _level->save(stream);
-    _playground->save(stream);
+    _game_state->save(save_context);
+    _spell_card_storage->save(save_context);
+    _treasure_card_storage->save(save_context);
+    _equipment_card_storage->save(save_context);
+    _hero_camp.save(save_context);
 
-    return !stream.fail();
+    _level->save(save_context);
+    _playground->save(save_context);
+
+    return !save_context.fail();
 }
 
-bool HeroQuestLevelWindow::load(std::istream& stream)
+bool HeroQuestLevelWindow::load(LoadContext& load_context)
 {
+    LoadContext::OpenChapter open_chapter(load_context, "HeroQuestLevelWindow");
+
+    // Note that _game_state, ..., _hero_camp have been loaded already before.
+
     DV(("loading level..."));
-    _level->load(stream);
+    _level->load(load_context);
 
     DV(("loading playground..."));
-    _playground->load(stream);
+    _playground->load(load_context);
 
     _user_interaction_mode = USER_INTERACTION_NORMAL;
     _user_selected_node_id = NodeID(-1, -1);
     _user_selected_two_node_ids = make_pair(NodeID(-1, -1), NodeID(-1, -1));
 
-    return !stream.fail();
+    return !load_context.fail();
 }
 
 bool HeroQuestLevelWindow::loadImagesAndAdjustPointers()
@@ -893,31 +902,29 @@ bool HeroQuestLevelWindow::loadGame(const QString& filename)
             return false;
     }
 
-    ifstream infile(filename_local.toUtf8().constData(), ios::binary);
-    if (infile.fail())
-    {
-        DVX(("Could not open file \"%s\" for reading.", qPrintable(filename_local)));
+    LoadContext load_context(filename_local,
+            Preferences::ENABLE_SAVE_LOAD_LOG ? LoadContext::ENABLE_LOG : LoadContext::DISABLE_LOG);
+    if (load_context.fail())
         return false;
-    }
 
     {
         DV(
                 ("HeroQuestLevelWindow::loadGame: suppress paint events while load game"));
         EventBlockingContext load_game_context(this); // makes sure that no paint event is running now
 
-        if (!_game_state->load(infile))
+        if (!_game_state->load(load_context))
         {
             return false;
         }
-        if (!_spell_card_storage->load(infile))
+        if (!_spell_card_storage->load(load_context))
         {
             return false;
         }
-        if (!_treasure_card_storage->load(infile))
+        if (!_treasure_card_storage->load(load_context))
         {
             return false;
         }
-        if (!_equipment_card_storage->load(infile))
+        if (!_equipment_card_storage->load(load_context))
         {
             return false;
         }
@@ -926,7 +933,7 @@ bool HeroQuestLevelWindow::loadGame(const QString& filename)
         createLevel();
 
         DV(("loading hero_camp..."));
-        if (!_hero_camp.load(infile, *_game_state))
+        if (!_hero_camp.load(load_context, *_game_state))
         {
             return false;
         }
@@ -938,7 +945,7 @@ bool HeroQuestLevelWindow::loadGame(const QString& filename)
         addInfoPaneToCentralWidget();
         addHeroStatisticPanes();
 
-        if (!load(infile))
+        if (!load(load_context))
         {
             DVX(("Could not load game from file \"%s\".", qPrintable(filename_local)));
             return false;
@@ -1005,14 +1012,12 @@ bool HeroQuestLevelWindow::saveGameChooseFilename()
     if (!chooseSaveGameFilename(this, &filename))
         return false;
 
-    ofstream outfile(filename.toUtf8().constData(), ios::binary);
-    if (outfile.fail())
-    {
-        DVX(("Could not open file \"%s\" for writing.", qPrintable(filename)));
+    SaveContext save_context(filename,
+            Preferences::ENABLE_SAVE_LOAD_LOG ? SaveContext::ENABLE_LOG : SaveContext::DISABLE_LOG);
+    if (save_context.fail())
         return false;
-    }
 
-    if (!save(outfile))
+    if (!save(save_context))
     {
         DVX(("Could not save game to file \"%s\".", qPrintable(filename)));
         return false;
@@ -1818,6 +1823,10 @@ void HeroQuestLevelWindow::addHeroStatisticPanes()
 void HeroQuestLevelWindow::connectActionButtons()
 {
     connect(HeroQuestLevelWindow::_hero_quest->getButtonPane()->getButton("Search Secret Doors / Traps"), SIGNAL(clicked()), this, SLOT(searchTrapsButtonClicked()));
+    connect(HeroQuestLevelWindow::_hero_quest->getButtonPane()->getButton("Search Secret Doors / Traps"),
+            SIGNAL(pressed()), this, SLOT(searchTrapsButtonPressed()));
+    connect(HeroQuestLevelWindow::_hero_quest->getButtonPane()->getButton("Search Secret Doors / Traps"),
+            SIGNAL(released()), this, SLOT(searchTrapsButtonReleased()));
     connect(HeroQuestLevelWindow::_hero_quest->getButtonPane()->getButton("Search Treasures"), SIGNAL(clicked()), this, SLOT(searchTreasuresButtonClicked()));
     connect(HeroQuestLevelWindow::_hero_quest->getButtonPane()->getButton("Delay Turn"), SIGNAL(clicked()), this, SLOT(delayTurnButtonClicked()));
     connect(HeroQuestLevelWindow::_hero_quest->getButtonPane()->getButton("End Turn"), SIGNAL(clicked()), this, SLOT(endTurnButtonClicked()));
@@ -1877,6 +1886,16 @@ void HeroQuestLevelWindow::initCurrentHeroActionStateToMoveOrAttack()
 void HeroQuestLevelWindow::searchTrapsButtonClicked()
 {
     _level->searchTrapsButtonClicked();
+}
+
+void HeroQuestLevelWindow::searchTrapsButtonPressed()
+{
+    _level->searchTrapsButtonPressed();
+}
+
+void HeroQuestLevelWindow::searchTrapsButtonReleased()
+{
+    _level->searchTrapsButtonReleased();
 }
 
 void HeroQuestLevelWindow::searchTreasuresButtonClicked()

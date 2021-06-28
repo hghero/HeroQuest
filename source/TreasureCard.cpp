@@ -11,6 +11,8 @@
 #include "TreasureDescription.h"
 #include "TreasureDataTypes.h"
 #include "Hero.h"
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 using namespace std;
 
@@ -99,22 +101,26 @@ TreasureCard::Characteristic TreasureCard::getCharacteristic() const
     return characteristic;
 }
 
-bool TreasureCard::save(std::ostream& stream) const
+bool TreasureCard::save(SaveContext& save_context) const
 {
-    Parent::save(stream);
+    SaveContext::OpenChapter open_chapter(save_context, "TreasureCard");
 
-    _treasure_description.save(stream);
+    Parent::save(save_context);
 
-    return !stream.fail();
+    _treasure_description.save(save_context);
+
+    return !save_context.fail();
 }
 
-bool TreasureCard::load(std::istream& stream)
+bool TreasureCard::load(LoadContext& load_context)
 {
-    Parent::load(stream);
+    LoadContext::OpenChapter open_chapter(load_context, "TreasureCard");
 
-    _treasure_description.load(stream);
+    Parent::load(load_context);
 
-    return !stream.fail();
+    _treasure_description.load(load_context);
+
+    return !load_context.fail();
 }
 
 void TreasureCard::updateTreasureImages()
@@ -195,7 +201,8 @@ bool TreasureCard::executeInventoryActions(Hero* user) const
 		        return false;
 
 		    set<NodeID> viewable_nodes;
-		    HeroQuestLevelWindow::_hero_quest->getPlayground()->computeViewableNodes(*user_node_id, false, &viewable_nodes);
+            HeroQuestLevelWindow::_hero_quest->getPlayground()->computeViewableNodes(*user_node_id, false, false,
+                    &viewable_nodes);
 		    bool undead_creature_killed = false;
 		    for (set<NodeID>::iterator it = viewable_nodes.begin(); it != viewable_nodes.end(); ++it)
 		    {

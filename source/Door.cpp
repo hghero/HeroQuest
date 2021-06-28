@@ -6,6 +6,8 @@
 #include "SecretDoor.h"
 #include "HeroQuestLevelWindow.h"
 #include "Playground.h"
+#include "SaveContext.h"
+#include "LoadContext.h"
 
 using namespace std;
 
@@ -116,25 +118,25 @@ QString Door::getName(const Door* door)
     return name;
 }
 
-bool Door::save(ostream& stream) const
+bool Door::save(SaveContext& save_context) const
 {
-    _f1.save(stream);
-    _f2.save(stream);
+    SaveContext::OpenChapter open_chapter(save_context, "Door");
 
-    char open_char = char(_open);
-    stream.write(&open_char, sizeof(open_char));
+    _f1.save(save_context);
+    _f2.save(save_context);
+    save_context.writeBool(_open, "_open");
 
-    return !stream.fail();
+    return !save_context.fail();
 }
 
-bool Door::load(istream& stream)
+bool Door::load(LoadContext& load_context)
 {
-    _f1.load(stream);
-    _f2.load(stream);
+    LoadContext::OpenChapter open_chapter(load_context, "Door");
 
-    char buffer_char[sizeof(char)];
-    stream.read(buffer_char, sizeof(char));
-    _open = bool(*buffer_char);
+    _f1.load(load_context);
+    _f2.load(load_context);
 
-    return !stream.fail();
+    load_context.readBool(&_open, "_open");
+
+    return !load_context.fail();
 }
