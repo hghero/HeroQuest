@@ -189,7 +189,7 @@ bool SpellCardStorage::save(SaveContext& save_context) const
 
     {
         SaveContext::OpenChapter open_chapter_spell_card_stock(save_context, "_spell_card_stock");
-        save_context.writeUInt(_spell_card_stock.size(), "_spell_card_stock.size()");
+        save_context.writeUInt(uint(_spell_card_stock.size()), "_spell_card_stock.size()");
         for (uint i = 0; i < _spell_card_stock.size(); ++i)
         {
             if (!_spell_card_stock[i].save(save_context))
@@ -202,7 +202,7 @@ bool SpellCardStorage::save(SaveContext& save_context) const
 
     {
         SaveContext::OpenChapter open_chapter_spell_card_deposition(save_context, "_spell_card_deposition");
-        save_context.writeUInt(_spell_card_deposition.size(), "_spell_card_deposition.size()");
+        save_context.writeUInt(uint(_spell_card_deposition.size()), "_spell_card_deposition.size()");
         for (uint i = 0; i < _spell_card_deposition.size(); ++i)
         {
             if (!_spell_card_deposition[i].save(save_context))

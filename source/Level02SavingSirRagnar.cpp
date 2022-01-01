@@ -14,7 +14,7 @@ using namespace std;
 
 // TODO: The HeroStatisticPanes are too narrow - the overall container size must somehow be enlarged
 
-Level02SavingSirRagnar::Level02SavingSirRagnar(uint num_heroes)
+Level02SavingSirRagnar::Level02SavingSirRagnar(size_t num_heroes)
 :
         Level(num_heroes), _level_completion_state(LEVEL_COMPLETION_STATE_SEARCHING_SIR_RAGNAR)
 {

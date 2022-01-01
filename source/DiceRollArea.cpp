@@ -22,7 +22,7 @@ _dice_width(dice_width)
     setLayout(_layout);
     _layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
     _layout->setSpacing(dice_width / 2);
-    _layout->setMargin(0);
+    _layout->setContentsMargins(0, 0, 0, 0);
 }
 
 DiceRollArea::~DiceRollArea()
@@ -55,7 +55,7 @@ void DiceRollArea::setContent(QPixmap* avatar_image, vector<QPixmap*>& dice_imag
      *
      *   <-------------------------------- _width ------------------------------->
      */
-    int avatar_width = avatar_label->pixmap()->width();
+    int avatar_width = avatar_label->pixmap().width();
     int dice_width = _dice_width;
     int space = _layout->spacing();
 
@@ -67,7 +67,8 @@ void DiceRollArea::setContent(QPixmap* avatar_image, vector<QPixmap*>& dice_imag
     if (max_num_dice_per_row < 1)
         return;
 
-    int num_rows = (dice_images.size() / max_num_dice_per_row) + (dice_images.size() % max_num_dice_per_row > 0 ? 1 : 0);
+    size_t num_rows = (dice_images.size() / max_num_dice_per_row)
+            + (dice_images.size() % max_num_dice_per_row > 0 ? 1 : 0);
 
     //DVX(("max_num_dice_per_row %d, num_rows % d", max_num_dice_per_row, num_rows));
 
@@ -77,7 +78,7 @@ void DiceRollArea::setContent(QPixmap* avatar_image, vector<QPixmap*>& dice_imag
     if (num_rows == 1)
     {
         // only 1 row
-        for (uint i = 0; i < dice_images.size(); ++i)
+        for (size_t i = 0; i < dice_images.size(); ++i)
         {
             QLabel* dice_label = new QLabel;
             _layout->addWidget(dice_label);
@@ -100,7 +101,7 @@ void DiceRollArea::setContent(QPixmap* avatar_image, vector<QPixmap*>& dice_imag
 
         int x = 0;
         int y = 0;
-        for (uint i = 0; i < dice_images.size(); ++i)
+        for (size_t i = 0; i < dice_images.size(); ++i)
         {
             //DVX(("i %d, x %d, y %d", i, x, y));
             QLabel* dice_label = new QLabel();

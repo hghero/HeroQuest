@@ -28,7 +28,7 @@ ButtonPane::ButtonPane()
 	QVBoxLayout* vertical_layout = new QVBoxLayout;
 	setLayout(vertical_layout);
 	vertical_layout->setAlignment(Qt::AlignTop);
-	vertical_layout->setMargin(0);
+    vertical_layout->setContentsMargins(0, 0, 0, 0);
 	vertical_layout->setSpacing(20);
 
 	vector<QString> button_captions_ordered(_button_ids.size());

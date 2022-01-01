@@ -1140,7 +1140,7 @@ bool QuestBoard::save(SaveContext& save_context) const
     _board_graph->save(save_context);
 
     // _room_ids
-    save_context.writeUInt(_room_ids.size(), "_room_ids.size()");
+    save_context.writeUInt(static_cast<uint>(_room_ids.size()), "_room_ids.size()");
     for (map<NodeID, uint>::const_iterator it = _room_ids.begin(); it != _room_ids.end(); ++it)
     {
         it->first.save(save_context);
@@ -1148,7 +1148,7 @@ bool QuestBoard::save(SaveContext& save_context) const
     }
 
     // _room_ids_reverse
-    save_context.writeUInt(_room_ids_reverse.size(), "_room_ids_reverse.size()");
+    save_context.writeUInt(uint(_room_ids_reverse.size()), "_room_ids_reverse.size()");
     for (map<uint, list<NodeID> >::const_iterator it = _room_ids_reverse.begin(); it != _room_ids_reverse.end(); ++it)
     {
         save_context.writeUInt(it->first, "_room_ids_reverse[i].first");
@@ -1156,14 +1156,14 @@ bool QuestBoard::save(SaveContext& save_context) const
     }
 
     // _movement_path
-    save_context.writeUInt(_movement_path.size(), "_movement_path.size()");
+    save_context.writeUInt(uint(_movement_path.size()), "_movement_path.size()");
     for (vector<NodeID>::const_iterator it = _movement_path.begin(); it != _movement_path.end(); ++it)
     {
         it->save(save_context);
     }
 
     // _reachable_area
-    save_context.writeUInt(_reachable_area.size(), "_reachable_area.size()");
+    save_context.writeUInt(uint(_reachable_area.size()), "_reachable_area.size()");
     for (set<NodeID>::const_iterator it = _reachable_area.begin(); it != _reachable_area.end(); ++it)
     {
         it->save(save_context);

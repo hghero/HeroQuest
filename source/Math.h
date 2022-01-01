@@ -274,7 +274,7 @@ public:
 
 // ===============================================
 
-uint randomNumber(uint limit);
+size_t randomNumber(size_t limit);
 
 template <class ElementType>
 typename ElementType getRandomElementByValue(std::vector<typename ElementType>& container)
@@ -282,7 +282,7 @@ typename ElementType getRandomElementByValue(std::vector<typename ElementType>& 
 	if (container.size() == 0)
         std::cout << "Internal program error: container is empty!" << std::endl;
 
-	uint r = randomNumber(container.size());
+    size_t r = randomNumber(container.size());
 
 	return container[r];
 }

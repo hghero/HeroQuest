@@ -138,7 +138,7 @@ public:
 	static const unsigned int ATTACK_FINISHED_DELAY;
 	static const unsigned int TRAP_TRIGGER_DELAY;
 
-    Level(uint num_heroes);
+    Level(size_t num_heroes);
 	virtual ~Level();
 
 	virtual QString getName() const;

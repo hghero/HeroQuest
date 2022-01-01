@@ -173,12 +173,12 @@ bool EquipmentCardStorage::save(SaveContext& save_context) const
 {
     SaveContext::OpenChapter open_chapter(save_context, "EquipmentCardStorage");
 
-    save_context.writeUInt(_equipment_card_stock.size(), "_equipment_card_stock.size()");
-    for (uint i = 0; i < _equipment_card_stock.size(); ++i)
+    save_context.writeUInt(uint(_equipment_card_stock.size()), "_equipment_card_stock.size()");
+    for (size_t i = 0; i < _equipment_card_stock.size(); ++i)
     {
         if (!_equipment_card_stock[i].save(save_context))
         {
-            DVX(("Error saving card %d from equipment card stock!", i));
+            DVX(("Error saving card %lld from equipment card stock!", i));
             return false;
         }
     }

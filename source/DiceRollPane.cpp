@@ -108,7 +108,7 @@ DiceRollPane::DiceRollPane(int width, int field_size)
 	QVBoxLayout* vertical_layout = new QVBoxLayout;
 	setLayout(vertical_layout);
 	vertical_layout->setAlignment(Qt::AlignTop);
-	vertical_layout->setMargin(0);
+    vertical_layout->setContentsMargins(0, 0, 0, 0);
 	vertical_layout->setSpacing(_field_size / 2);
 
 	// top: _movement_dice_roll_area
@@ -122,12 +122,12 @@ DiceRollPane::DiceRollPane(int width, int field_size)
 	{
 	    QLabel* bottom_label = new QLabel;
 	    vertical_layout->addWidget(bottom_label);
-	    vertical_layout->setMargin(0);
+        vertical_layout->setContentsMargins(0, 0, 0, 0);
 	    bottom_label->setFixedHeight(3 * _field_size);
 
 	    QHBoxLayout* horizontal_layout = new QHBoxLayout;
 	    bottom_label->setLayout(horizontal_layout);
-	    horizontal_layout->setMargin(0);
+        horizontal_layout->setContentsMargins(0, 0, 0, 0);
 	    horizontal_layout->setSpacing(_field_size);
 
 	    const int dice_roll_area_width = (_width - horizontal_layout->spacing()) / 2;

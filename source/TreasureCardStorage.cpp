@@ -218,7 +218,7 @@ bool TreasureCardStorage::save(SaveContext& save_context) const
 {
     SaveContext::OpenChapter open_chapter(save_context, "TreasureCardStorage");
 
-    save_context.writeUInt(_treasure_cards.size(), "_treasure_cards.size()");
+    save_context.writeUInt(uint(_treasure_cards.size()), "_treasure_cards.size()");
     for (uint i = 0; i < _treasure_cards.size(); ++i)
     {
         if (!_treasure_cards[i].save(save_context))

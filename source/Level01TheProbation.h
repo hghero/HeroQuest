@@ -7,7 +7,7 @@
 class Level01TheProbation : public Level
 {
 public:
-    Level01TheProbation(uint num_heroes);
+    Level01TheProbation(size_t num_heroes);
     virtual ~Level01TheProbation();
 
 	virtual QString getName() const;

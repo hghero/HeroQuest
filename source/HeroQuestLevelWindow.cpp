@@ -229,7 +229,7 @@ void HeroQuestLevelWindow::createGUIElements()
 #endif
     QVBoxLayout* action_pane_layout = new QVBoxLayout;
     _action_pane->setLayout(action_pane_layout);
-    action_pane_layout->setMargin(0);
+    action_pane_layout->setContentsMargins(0, 0, 0, 0);
     _dice_roll_pane = new DiceRollPane(ParameterStorage::instance->getActionPaneWidth(),
             ParameterStorage::instance->getFieldSize());
     action_pane_layout->addStretch(); // test
@@ -252,7 +252,7 @@ void HeroQuestLevelWindow::createGUIElements()
     QVBoxLayout* playground_layout = new QVBoxLayout;
     playground_layout->setAlignment(Qt::AlignVCenter);
     playground_pane->setLayout(playground_layout);
-    playground_layout->setMargin(0);
+    playground_layout->setContentsMargins(0, 0, 0, 0);
     playground_layout->setSpacing(0);
     playground_layout->addStretch();
     playground_layout->addWidget(_playground);
@@ -327,7 +327,7 @@ void HeroQuestLevelWindow::addInfoPaneToCentralWidget()
     _info_pane = new QLabel(_info_pane_wrapper);
     QVBoxLayout* info_pane_layout = new QVBoxLayout;
     _info_pane->setLayout(info_pane_layout);
-    info_pane_layout->setMargin(0);
+    info_pane_layout->setContentsMargins(0, 0, 0, 0);
 #if 0
     _info_pane->setFrameStyle(QFrame::Panel | QFrame::Sunken);
     _info_pane->setStyleSheet("color: rgb(255,0,0) ; border: 1px solid #ff0000 ;");
@@ -578,9 +578,9 @@ void HeroQuestLevelWindow::removeHeroStatisticPane(const Hero* hero)
     DVX(("_info_pane->layout() content before remove = %d", LayoutHelper::getNumWidgets(_info_pane->layout())));
 #endif
 
-    int layout_index = index * 2;
-    _info_pane->layout()->removeItem(_info_pane->layout()->itemAt(layout_index + 1)); // space below statistic pane
-    _info_pane->layout()->removeItem(_info_pane->layout()->itemAt(layout_index)); // statistic pane
+    size_t layout_index = index * 2;
+    _info_pane->layout()->removeItem(_info_pane->layout()->itemAt(int(layout_index + 1))); // space below statistic pane
+    _info_pane->layout()->removeItem(_info_pane->layout()->itemAt(int(layout_index))); // statistic pane
 
     _hero_statistic_panes.erase(it);
     delete hero_statistic_pane;
@@ -940,6 +940,7 @@ bool HeroQuestLevelWindow::loadGame(const QString& filename)
 
         // update heroes from camp
         _hero_camp.getHeroes(&_heroes);
+        _level->setActingHeroes(_heroes);
 
         // hero static panes
         addInfoPaneToCentralWidget();
@@ -974,7 +975,7 @@ bool HeroQuestLevelWindow::loadGame(const QString& filename)
     return true;
 }
 
-Level* HeroQuestLevelWindow::createLevelFromLevelID(GameState::LevelID level_id, uint num_heroes)
+Level* HeroQuestLevelWindow::createLevelFromLevelID(GameState::LevelID level_id, size_t num_heroes)
 {
     Level* level = 0;
 
@@ -1769,8 +1770,8 @@ void HeroQuestLevelWindow::startGame(const QString& filename)
     else
     {
         createLevel();
-        addHeroStatisticPanes();
         _level->setActingHeroes(getHeroes());
+        addHeroStatisticPanes(); // assumes that _acting_heroes have already been set!
         _level->create();
         _level->startRound();
     }
@@ -1948,14 +1949,14 @@ void HeroQuestLevelWindow::addHeroStatisticPane(Hero* hero)
  */
 void HeroQuestLevelWindow::insertHeroStatisticPane(Hero* hero, size_t index, bool extrapolate_info_pane_size)
 {
-    DVX(("insertHeroStatisticPane for %s at index %d", qPrintable(hero->getName()), index));
+    DVX(("insertHeroStatisticPane for %s at index %zd", qPrintable(hero->getName()), index));
 
     QSize fixed_size(0, 0);
     if (extrapolate_info_pane_size)
     {
         // bad workaround, needed because layout->sizeHint is wrong after having added sir ragnar in level 2 :-(
         QSize current_size_hint = _info_pane->layout()->sizeHint();
-        int current_num_statistic_panes = _hero_statistic_panes.size();
+        uint current_num_statistic_panes = uint(_hero_statistic_panes.size());
         fixed_size = QSize(current_size_hint.width(),
                 current_size_hint.height() / current_num_statistic_panes * (current_num_statistic_panes + 1));
     }

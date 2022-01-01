@@ -17,7 +17,7 @@ HintPane::HintPane()
     QVBoxLayout* vertical_layout = new QVBoxLayout;
 	setLayout(vertical_layout);
     vertical_layout->setAlignment(Qt::AlignCenter);
-	vertical_layout->setMargin(0);
+    vertical_layout->setContentsMargins(0, 0, 0, 0);
     vertical_layout->setSpacing(3);
 
     _hint_label = new QLabel();

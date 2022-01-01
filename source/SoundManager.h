@@ -2,9 +2,10 @@
 #define SOUND_MANAGER_H
 
 #include <map>
+#include <memory>
 
 
-class QSound;
+class QMediaPlayer;
 class QString;
 
 
@@ -42,10 +43,11 @@ public:
 	void playSoundOnce(const SoundID& sound_id) const;
 
 private:
-	bool loadSoundsFromFiles();
+	bool assignSoundFilenames();
 	bool loadSoundFromFile(const SoundID& sound_id, const QString& filename);
 
-	std::map<SoundID, QSound*> _sounds; // <ID, sample_data>
+	std::map<SoundID, QString> _sounds; // <ID, filename>
+	std::unique_ptr<QMediaPlayer> _player;
 };
 
 #endif

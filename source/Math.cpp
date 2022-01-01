@@ -24,9 +24,9 @@ ostream& operator<<(ostream& stream, const Vec2d& vec)
 	return stream;
 }
 
-uint randomNumber(uint limit)
+size_t randomNumber(size_t limit)
 {
-    uint r = rand() % limit;
+    size_t r = rand() % limit;
     return r;
 }
 

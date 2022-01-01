@@ -9,7 +9,7 @@ class LoadContext;
 class Level02SavingSirRagnar : public Level
 {
 public:
-    Level02SavingSirRagnar(uint num_heroes);
+    Level02SavingSirRagnar(size_t num_heroes);
     virtual ~Level02SavingSirRagnar();
 
 	virtual QString getName() const;

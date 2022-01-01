@@ -1,7 +1,8 @@
 #ifndef TRAP_H
 #define TRAP_H
 
-#include <QtCore/QTime>
+#include <QtCore/QElapsedTimer>
+#include <QtCore/qnamespace.h>
 
 #include "GraphBase.h"
 
@@ -80,7 +81,7 @@ public:
     virtual bool load(LoadContext& load_context);
 
 private:
-	QTime _redraw_start_time;
+	QElapsedTimer _redraw_start_time;
 	bool _first_redraw;
 };
 

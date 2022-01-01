@@ -30,7 +30,7 @@ DialogLevelBriefing::DialogLevelBriefing(GameState::LevelID level_id)
     // size of window: width 75 %
     setFixedWidth(screen_width * 3 / 4);
 
-    auto_ptr<Level> tmp_level(HeroQuestLevelWindow::createLevelFromLevelID(level_id, 0));
+    unique_ptr<Level> tmp_level(HeroQuestLevelWindow::createLevelFromLevelID(level_id, 0));
     setWindowTitle("Briefing");
     setStyleSheet(HeroQuestLevelWindow::DIALOG_STYLE);
 

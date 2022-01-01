@@ -88,8 +88,8 @@ unsigned int NodeID::numArgsSerialized()
 
 void NodeID::serialize(vector<void*>* target) const
 {
-	target->push_back((void*)(_ix));
-	target->push_back((void*)(_iy));
+	target->push_back((void*)qint64(_ix));
+	target->push_back((void*)qint64(_iy));
 }
 
 ostream& operator<<(ostream& s, const NodeID& node_id)
@@ -270,8 +270,8 @@ bool Node::save(SaveContext& save_context) const
     SaveContext::OpenChapter open_chapter(save_context, "Node");
 
     // _neighbors
-    save_context.writeUInt(_neighbors.size(), "_neighbors.size()");
-    for (uint i = 0; i < _neighbors.size(); ++i)
+    save_context.writeUInt(uint(_neighbors.size()), "_neighbors.size()");
+    for (size_t i = 0; i < _neighbors.size(); ++i)
         _neighbors[i].save(save_context);
 
     return !save_context.fail();

@@ -33,9 +33,9 @@ using namespace std;
 
 /*
  * TODO:
- * - neue Spieler empfinden das Verschwinden der Würfelergebnisse als zu schnell => dies sollte eine
- *   Preference-Einstellung sein! => zunächst als XML-Datei
- * - Zaubersprüche sollen nach dem Ende eines Levels wieder neu zugeteilt werden!
+ * - neue Spieler empfinden das Verschwinden der Wuerfelergebnisse als zu schnell => dies sollte eine
+ *   Preference-Einstellung sein! => zunaechst als XML-Datei
+ * - Zaubersprueche sollen nach dem Ende eines Levels wieder neu zugeteilt werden!
  * - Level 3 implementieren
  */
 int main(int argc, char* argv[])

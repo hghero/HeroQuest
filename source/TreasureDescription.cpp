@@ -152,7 +152,7 @@ bool TreasureDescription::getImmediateActionsInternal(vector<QString>* actions) 
  * \param split_behavior Specifies how to handle empty string parts.
  * \return The string between the braces.
  */
-QString TreasureDescription::getEmbracedValue(const QString& action, QString::SplitBehavior split_behavior)
+QString TreasureDescription::getEmbracedValue(const QString& action, Qt::SplitBehavior split_behavior)
 {
     // "GOLD <40>" => ["GOLD ", "40>"]
     QStringList str1 = action.split("<", split_behavior);
@@ -173,7 +173,7 @@ QString TreasureDescription::getEmbracedValue(const QString& action, QString::Sp
  */
 bool TreasureDescription::getValueOfGoldExpression(const QString& expr, uint* result_value)
 {
-    QStringList tokens = expr.split(" ", QString::SkipEmptyParts);
+    QStringList tokens = expr.split(" ", Qt::SkipEmptyParts);
 
     if (tokens.size() >= 3)
     {
@@ -253,7 +253,7 @@ bool TreasureDescription::getValueOfGoldExpression(const QString& expr, uint* re
         if (tokens[0] == "MOVEMENT_DICE")
         {
             // get random number between 1 and 6
-            *result_value = randomNumber(6) + 1;
+            *result_value = uint(randomNumber(6) + 1);
             return true;
         }
 
@@ -261,7 +261,7 @@ bool TreasureDescription::getValueOfGoldExpression(const QString& expr, uint* re
     }
     else
     {
-        DVX(("Invalid number of tokens (%d) in expression %s", tokens.size(), qPrintable(expr)));
+        DVX(("Invalid number of tokens (%Id) in expression %s", tokens.size(), qPrintable(expr)));
         return false;
     }
 
@@ -277,7 +277,7 @@ bool TreasureDescription::getValueOfGoldExpression(const QString& expr, uint* re
  */
 bool TreasureDescription::interpretRoundExpression(const QString& expr, QString* command, uint* result_value)
 {
-    QStringList str1 = expr.split("=", QString::SkipEmptyParts);
+    QStringList str1 = expr.split("=", Qt::SkipEmptyParts);
     if (str1.size() != 3 || str1[1] != "=")
     {
         DVX(("Error interpreting round expression \"%s\"", qPrintable(expr)));
@@ -414,7 +414,7 @@ void TreasureDescription::executeImmediateActions() const
             // handle special expression "COMBAT_DICE != SKULL ? -1 : 0":
             // 1-3 (SKULL): 0
             // 4-6 (!= SKULL): -1
-            int number = randomNumber(6) + 1;
+            size_t number = randomNumber(6) + 1;
             if (number >= 4 && number <= 6)
             {
                 current_hero->addLifePoints(-1);

@@ -28,8 +28,8 @@ bool GameState::save(SaveContext& save_context) const
     // _hero_names
     {
         SaveContext::OpenChapter open_chapter_hero_names(save_context, "_hero_names");
-        save_context.writeUInt(_hero_names.size(), "size");
-        for (uint i = 0; i < _hero_names.size(); ++i)
+        save_context.writeUInt(uint(_hero_names.size()), "size");
+        for (size_t i = 0; i < _hero_names.size(); ++i)
         {
             save_context.writeString(_hero_names[i], "hero name");
         }
@@ -42,8 +42,8 @@ bool GameState::save(SaveContext& save_context) const
     // _level_names
     {
         SaveContext::OpenChapter open_chapter_level_names(save_context, "_level_names");
-        save_context.writeUInt(_level_names.size(), "_level_names.size()");
-        for (uint i = 0; i < _level_names.size(); ++i)
+        save_context.writeUInt(uint(_level_names.size()), "_level_names.size()");
+        for (size_t i = 0; i < _level_names.size(); ++i)
         {
             save_context.writeString(_level_names[i], "level name");
         }

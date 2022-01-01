@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 #include <algorithm>
+#include <random>
 
 #include <QtWidgets/QDialog>
 #include <QtCore/QDir>
@@ -185,8 +186,8 @@ bool Level::HeroActionStates::save(SaveContext& save_context) const
     save_context.writeBool(_has_thrown_movement_dice, "_has_thrown_movement_dice");
     save_context.writeBool(_may_cross_monsters_during_movement, "_may_cross_monsters_during_movement");
 
-    save_context.writeUInt(_dice_results.size(), "_dice_results.size()");
-    for (uint i = 0; i < _dice_results.size(); ++i)
+    save_context.writeUInt(uint(_dice_results.size()), "_dice_results.size()");
+    for (size_t i = 0; i < _dice_results.size(); ++i)
     {
         QString i_str;
         i_str.setNum(i);
@@ -269,15 +270,15 @@ bool Level::LevelState::save(SaveContext& save_context) const
     save_context.writeUInt(_current_hero_idx, "_current_hero_idx");
     save_context.writeUInt(_current_monster_idx, "_current_monster_idx");
 
-    save_context.writeUInt(_hero_action_states.size(), "_hero_action_states.size()");
+    save_context.writeUInt(uint(_hero_action_states.size()), "_hero_action_states.size()");
     for (vector<HeroActionStates>::const_iterator it = _hero_action_states.begin(); it != _hero_action_states.end(); ++it)
         it->save(save_context);
 
-    save_context.writeUInt(_monster_action_states.size(), "_monster_action_states.size()");
+    save_context.writeUInt(uint(_monster_action_states.size()), "_monster_action_states.size()");
     for (vector<MonsterActionStates>::const_iterator it = _monster_action_states.begin(); it != _monster_action_states.end(); ++it)
         it->save(save_context);
 
-    save_context.writeUInt(_num_turns_left.size(), "_num_turns_left.size()");
+    save_context.writeUInt(uint(_num_turns_left.size()), "_num_turns_left.size()");
     for (vector<uint>::const_iterator it = _num_turns_left.begin(); it != _num_turns_left.end(); ++it)
         save_context.writeUInt(*it, "_num_turns_left[i]");
 
@@ -329,7 +330,7 @@ bool Level::LevelState::load(LoadContext& load_context)
 
 // ==================================================================
 
-Level::Level(uint num_heroes)
+Level::Level(size_t num_heroes)
         :
         _acting_heroes(), // set later via setActingHeroes (after the heroes have been added)
   _level_state(),
@@ -754,7 +755,9 @@ void Level::shuffleTreasureCardStock()
     _treasure_card_stock.clear();
 
     // shuffle on random access structure
-    random_shuffle(tmp_cards.begin(), tmp_cards.end());
+    std::random_device rng;
+    std::mt19937 urng(rng());
+    std::shuffle(tmp_cards.begin(), tmp_cards.end(), urng);
 
     // move back to originating list
     for (vector<TreasureCard>::const_iterator it = tmp_cards.begin(); it != tmp_cards.end(); ++it)
@@ -891,7 +894,8 @@ bool Level::removeMonster(Monster* monster)
     DV(("Level::removeMonster %s BEGIN", qPrintable(Monster::getName(monster))));
     if (_monsters.size() != _level_state._monster_action_states.size())
     {
-        DVX(("_monsters.size() = %d, but _level_state._monster_action_states.size() = %d", _monsters.size(), _level_state._monster_action_states.size()));
+        DVX(
+                ("_monsters.size() = %zd, but _level_state._monster_action_states.size() = %zd", _monsters.size(), _level_state._monster_action_states.size()));
         return false;
     }
 
@@ -948,7 +952,8 @@ bool Level::removeHero(Hero* hero, bool exit_successfully)
     if (_acting_heroes.size() != _level_state._hero_action_states.size() ||
             _acting_heroes.size() != _level_state._num_turns_left.size())
     {
-        DVX(("_acting_heroes.size() = %d, _level_state._hero_action_states.size() = %d, _level_state._num_turns_left.size() = %d",
+        DVX(
+                ("_acting_heroes.size() = %zd, _level_state._hero_action_states.size() = %zd, _level_state._num_turns_left.size() = %zd",
                 _acting_heroes.size(),
                 _level_state._hero_action_states.size(),
                 _level_state._num_turns_left.size()));
@@ -1864,7 +1869,7 @@ Level::SwitchToNextCreatureResult Level::switchToNextCreature(bool remove_curren
         // so that the potential index increase (see below) targets the correct
         // hero in order
         if (previous_hero_index == 0)
-            _level_state._current_hero_idx = _acting_heroes.size() - 1;
+            _level_state._current_hero_idx = uint(_acting_heroes.size()) - 1;
         else
             _level_state._current_hero_idx = previous_hero_index - 1;
     }
@@ -2482,8 +2487,8 @@ bool Level::save(SaveContext& save_context) const
 {
     SaveContext::OpenChapter open_chapter(save_context, "Level");
 
-    save_context.writeUInt(_acting_heroes.size(), "_acting_heroes.size()");
-    for (uint i = 0; i < _acting_heroes.size(); ++i)
+    save_context.writeUInt(uint(_acting_heroes.size()), "_acting_heroes.size()");
+    for (size_t i = 0; i < _acting_heroes.size(); ++i)
     {
         QString i_str;
         i_str.setNum(i);
@@ -2493,54 +2498,55 @@ bool Level::save(SaveContext& save_context) const
 
     _level_state.save(save_context);
 
-    save_context.writeUInt(_delayed_heroes.size(), "_delayed_heroes.size()");
+    save_context.writeUInt(uint(_delayed_heroes.size()), "_delayed_heroes.size()");
     for (set<Hero*>::const_iterator it_delayed_heroes = _delayed_heroes.begin();
             it_delayed_heroes != _delayed_heroes.end(); ++it_delayed_heroes)
     {
         save_context.writeUInt((*it_delayed_heroes)->getReferencingID(), "delayed_hero->getReferencingID()");
     }
 
-    save_context.writeUInt(_monsters.size(), "_monsters.size()");
-    for (uint i = 0; i < _monsters.size(); ++i)
+    save_context.writeUInt(uint(_monsters.size()), "_monsters.size()");
+    for (size_t i = 0; i < _monsters.size(); ++i)
     {
         save_context.writeString(Monster::getName(_monsters[i]), "Monster::getName(_monsters[i])");
         _monsters[i]->save(save_context);
     }
 
-    save_context.writeUInt(_doors.size(), "_doors.size()");
-    for (uint i = 0; i < _doors.size(); ++i)
+    save_context.writeUInt(uint(_doors.size()), "_doors.size()");
+    for (size_t i = 0; i < _doors.size(); ++i)
     {
         save_context.writeString(Door::getName(_doors[i]), "Door::getName(_doors[i])");
         _doors[i]->save(save_context);
     }
 
-    save_context.writeUInt(_traps.size(), "_traps.size()");
-    for (uint i = 0; i < _traps.size(); ++i)
+    save_context.writeUInt(uint(_traps.size()), "_traps.size()");
+    for (size_t i = 0; i < _traps.size(); ++i)
     {
         save_context.writeString(Trap::getName(_traps[i]), "Trap::getName(_traps[i])");
         _traps[i]->save(save_context);
     }
 
-    save_context.writeUInt(_decoration.size(), "_decoration.size()");
-    for (uint i = 0; i < _decoration.size(); ++i)
+    save_context.writeUInt(uint(_decoration.size()), "_decoration.size()");
+    for (size_t i = 0; i < _decoration.size(); ++i)
     {
         save_context.writeString(Decoration::getName(_decoration[i]), "Decoration::getName(_decoration[i])");
         _decoration[i]->save(save_context);
     }
 
-    save_context.writeUInt(_treasure_card_stock.size(), "_treasure_card_stock.size()");
+    save_context.writeUInt(uint(_treasure_card_stock.size()), "_treasure_card_stock.size()");
     for (list<TreasureCard>::const_iterator it = _treasure_card_stock.begin(); it != _treasure_card_stock.end(); ++it)
     {
         it->save(save_context);
     }
 
-    save_context.writeUInt(_treasure_card_deposition.size(), "_treasure_card_deposition.size()");
+    save_context.writeUInt(uint(_treasure_card_deposition.size()), "_treasure_card_deposition.size()");
     for (list<TreasureCard>::const_iterator it = _treasure_card_deposition.begin(); it != _treasure_card_deposition.end(); ++it)
     {
         it->save(save_context);
     }
 
-    save_context.writeUInt(_chest_pos_to_treasure_description.size(), "_chest_pos_to_treasure_description.size()");
+    save_context.writeUInt(uint(_chest_pos_to_treasure_description.size()),
+            "_chest_pos_to_treasure_description.size()");
     for (map<NodeID, TreasureDescription>::const_iterator it = _chest_pos_to_treasure_description.begin();
             it != _chest_pos_to_treasure_description.end(); ++it)
     {
@@ -2548,7 +2554,7 @@ bool Level::save(SaveContext& save_context) const
         it->second.save(save_context);
     }
 
-    save_context.writeUInt(_non_chest_room_ids_treasures_searched.size(),
+    save_context.writeUInt(uint(_non_chest_room_ids_treasures_searched.size()),
             "_non_chest_room_ids_treasures_searched.size()");
     for (set<uint>::const_iterator it = _non_chest_room_ids_treasures_searched.begin(); it != _non_chest_room_ids_treasures_searched.end(); ++it)
     {

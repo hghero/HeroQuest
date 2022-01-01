@@ -115,7 +115,7 @@ DialogBuyEquipment::DialogBuyEquipment(HeroCamp& hero_camp)
                     }
                     default:
                     {
-                        DVX(("Index %d out of bounds", i));
+                        DVX(("Index %d out of bounds", int(i)));
                         break;
                     }
                 }

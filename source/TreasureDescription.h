@@ -5,6 +5,7 @@
 #include <vector>
 #include <set>
 
+#include <QtCore/Qt>
 #include <QtCore/QString>
 
 #include "TreasureDataTypes.h"
@@ -67,8 +68,8 @@ private:
 	bool getInventoryItemsInternal(std::vector<QString>* items) const;
 	bool getImmediateActionsInternal(std::vector<QString>* immediate_actions) const;
 
-    static QString getEmbracedValue(const QString& action, QString::SplitBehavior split_behaviour =
-            QString::SkipEmptyParts);
+    static QString getEmbracedValue(const QString& action, Qt::SplitBehavior split_behaviour =
+            Qt::SkipEmptyParts);
     static bool getValueOfGoldExpression(const QString& expr, uint* result_value);
     static bool interpretRoundExpression(const QString& expr, QString* command, uint* result_value);
 

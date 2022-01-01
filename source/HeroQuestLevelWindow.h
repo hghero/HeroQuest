@@ -180,7 +180,7 @@ class HeroQuestLevelWindow : public QMainWindow
     bool saveGameChooseFilename();
 
     public:
-    static Level* createLevelFromLevelID(GameState::LevelID level_id, uint num_heroes);
+    static Level* createLevelFromLevelID(GameState::LevelID level_id, size_t num_heroes);
 
     void updateHeroStatisticPaneOfCurrentHero();
     void updateHeroStatisticPane(const Hero* hero);

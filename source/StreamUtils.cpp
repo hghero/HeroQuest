@@ -1,6 +1,7 @@
 #include "StreamUtils.h"
 
 #include <list>
+#include <memory>
 
 #include "Playground.h"
 #include "GraphBase.h"
@@ -27,7 +28,7 @@ bool StreamUtils::read(istream& stream, QString* str)
     if (stream.fail() || str_size < 1 || str_size > MAX_BUFFER_SIZE)
         return false;
 
-    auto_ptr<char> str_buffer(new char[str_size]);
+    unique_ptr<char> str_buffer(new char[str_size]);
     stream.read(str_buffer.get(), str_size);
     *str = QString::fromUtf8(str_buffer.get(), str_size);
 

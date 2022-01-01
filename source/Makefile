@@ -43,22 +43,14 @@ endif
 
 # ===============================================================
 
-ifeq (X$(BOOST_PATH),X)
-  $(error Set environment variable BOOST_PATH, e.g. "e:/Programmieren/ProgrammierenCPP/boost/boost_1_74_0")
-endif
-
-# ===============================================================
-
 ifeq ($(TARGET_MODE),RELEASE)
   TARGET_DIR = release
 else
   TARGET_DIR = debug
 endif
 TARGET = $(TARGET_DIR)/HeroQuest.exe
-EXECUTE_DIR = execute
 SOURCE_DIR = source
 QT_LIBPATH = $(QT_PATH)"/lib"
-BOOST_LIBPATH = $(BOOST_PATH)"/libs"
 
 # ===============================================================
 
@@ -95,8 +87,31 @@ PRECOMPILE = moc.exe
 RCCCOMPILE = rcc.exe
 
 COMPILE = cl.exe
-ADDITIONAL_INCLUDES = /I$(QT_PATH)/include /I$(BOOST_PATH)
-COMPILE_OPTIONS = /c /Zi /MD /nologo /W3 /WX- /GL /Gm- /EHsc /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /GR /Gd /analyze- /errorReport:queue /DNOMINMAX # NOMINMAX required for QDialog
+ADDITIONAL_INCLUDES = /I$(QT_PATH)/include /I"C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\ucrt" /I"C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\um" /I"C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\shared"
+
+# compile options explained:
+#   "/std:c++17", // C++ 17 standard
+#   "/c", // generate object file only (no exe)
+#   "/Zi", // produce separate PDB file which contains debugging information
+#   "/MD", // use the multithread-specific and DLL-specific version of the run-time library;
+#          // defines _MT and _DLL and causes the compiler to place the library name MSVCRT.lib into the .obj file
+#   "/nologo", // suppresses the display of the copyright banner when the compiler starts up
+#   "/W3", // displays level 1, level 2, and level 3 (production quality) warnings
+#   "/GL", // enable whole program optimization
+#   "/EHsc", // exception handling: "s": enables standard C++ stack unwinding;
+#            // "c": the compiler assumes that functions declared as extern "C" never throw a C++ exception
+#   "/GS", // enable buffer security check (detects some buffer overruns)
+#   "/Gy", // allow the compiler to put functions in a way that they can be optimized by the linker
+#   "/fp:precise", // the compiler preserves the source expression ordering and rounding properties of floating-point code
+#   "/Zc:wchar_t", // Parse wchar_t as a built-in type according to the C++ standard
+#   "/Zc:forScope", //  let a for loop's initializer go out of scope after the for loop
+#   "/Zc:__cplusplus", // enable the __cplusplus preprocessor macro to report an updated value for recent C++ language standards support
+#   "/GR", // enable runtime type information
+#   "/Gd", // specify the __cdecl calling convention for all functions except C++ member functions and functions that are marked __stdcall, __fastcall, or __vectorcall
+#   "/analyze-", // turn off code analysis
+#   "/DNOMINMAX", // NOMINMAX required for QDialog
+COMPILE_OPTIONS = /std:c++17 /c /Zi /MD /nologo /W3 /GL /EHsc /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Zc:__cplusplus /GR /Gd /analyze- /DNOMINMAX
+# old: COMPILE_OPTIONS = /std:c++17 /c /Zi /MD /nologo /W3 /WX- /GL /Gm- /EHsc /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Zc:__cplusplus /GR /Gd /analyze- /errorReport:queue /DNOMINMAX # NOMINMAX required for QDialog
 ifeq ($(TARGET_MODE),RELEASE)
 COMPILE_OPTIONS += /O2 /Oy- /Oi
 else
@@ -111,11 +126,11 @@ endif
 
 LINK = link.exe
 LINK_TARGET = /OUT:"$(TARGET)"
-LINK_OPTIONS = /MACHINE:X86 /INCREMENTAL:NO /NOLOGO /SUBSYSTEM:CONSOLE /OPT:REF /OPT:ICF /ALLOWISOLATION /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /ERRORREPORT:QUEUE /DEBUG /LIBPATH:$(QT_LIBPATH)
-LINK_LIBS = Qt5Cored.lib \
-            Qt5Guid.lib \
-            Qt5Widgetsd.lib \
-            Qt5Multimediad.lib \
+LINK_OPTIONS = /MACHINE:X64 /INCREMENTAL:NO /NOLOGO /SUBSYSTEM:CONSOLE /OPT:REF /OPT:ICF /ALLOWISOLATION /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /ERRORREPORT:QUEUE /DEBUG /LIBPATH:$(QT_LIBPATH) /LIBPATH:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\ucrt\x64" /LIBPATH:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64"
+LINK_LIBS = Qt6Cored.lib \
+            Qt6Guid.lib \
+            Qt6Widgetsd.lib \
+            Qt6Multimediad.lib \
             winmm.lib \
             Psapi.lib \
             gdiplus.lib \
@@ -165,8 +180,11 @@ directories:
 
 all:	directories $(TARGET)
 	cp $(TARGET) $(EXECUTE_DIR)/
+	cp $(TARGET) $(RELEASE_DIR)/
 	mkdir -p $(EXECUTE_DIR)/resources
+	mkdir -p $(RELEASE_DIR)/resources
 	cp $(RCC_DIR)/* $(EXECUTE_DIR)/resources
+	cp $(RCC_DIR)/* $(RELEASE_DIR)/resources
 	mkdir -p $(EXECUTE_DIR)/pdb
 	cp $(PDB_DIR)/* $(EXECUTE_DIR)/pdb
 

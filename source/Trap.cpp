@@ -219,18 +219,18 @@ void SpearTrap::redraw(QPainter& painter, bool /*highlight*/, Qt::GlobalColor /*
 
 	if (_first_redraw)
 	{
-	    _redraw_start_time = QTime::currentTime();
+	    _redraw_start_time = QElapsedTimer();
 	    _first_redraw = false;
 	}
 
     Playground* playground = HeroQuestLevelWindow::_hero_quest->getPlayground();
     QuestBoard* quest_board = playground->getQuestBoard();
 
-	int time_delta_ms = min(_redraw_start_time.elapsed(), int(Level::TRAP_TRIGGER_DELAY));
+	qint64 time_delta_ms = min(_redraw_start_time.elapsed(), qint64(Level::TRAP_TRIGGER_DELAY));
 	// alpha: 1 -> 0 in VANISHING_TIME_MS time
 	double alpha = 1 - double(time_delta_ms) / Level::TRAP_TRIGGER_DELAY;
 
-	DV(("time_delta_ms = %d, alpha = %lf", time_delta_ms, alpha));
+	DV(("time_delta_ms = %zd, alpha = %lf", time_delta_ms, alpha));
 
     QPixmap* image = playground->getSpearTrapImage();
 

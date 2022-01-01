@@ -314,21 +314,21 @@ bool Inventory::save(SaveContext& save_context) const
     save_context.writeInt(_gold, "_gold");
 
     // treasure cards
-    save_context.writeUInt(_treasure_cards.size(), "_treasure_cards.size()");
+    save_context.writeUInt(uint(_treasure_cards.size()), "_treasure_cards.size()");
     for (set<TreasureCard>::const_iterator it = _treasure_cards.begin(); it != _treasure_cards.end(); ++it)
     {
         it->save(save_context);
     }
 
     // spell cards
-    save_context.writeUInt(_spell_cards.size(), "_spell_cards.size()");
+    save_context.writeUInt(uint(_spell_cards.size()), "_spell_cards.size()");
     for (set<SpellCard>::const_iterator it = _spell_cards.begin(); it != _spell_cards.end(); ++it)
     {
         it->save(save_context);
     }
 
     // equipment cards
-    save_context.writeUInt(_equipment_cards.size(), "_equipment_cards.size()");
+    save_context.writeUInt(uint(_equipment_cards.size()), "_equipment_cards.size()");
     for (set<EquipmentCard>::const_iterator it = _equipment_cards.begin(); it != _equipment_cards.end(); ++it)
     {
         it->save(save_context);

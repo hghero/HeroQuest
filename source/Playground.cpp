@@ -1156,7 +1156,7 @@ void Playground::makeAllRelevantNodesVisible()
 bool Playground::save(SaveContext& save_context) const
 {
     //! Map of heroes (barbarian, dwarf, alb, magician) and monsters, mapped to Playground positions (NodeID)
-    save_context.writeUInt(_creatures.size(), "_creatures.size()");
+    save_context.writeUInt(uint(_creatures.size()), "_creatures.size()");
     for (map<Creature*, NodeID>::const_iterator it = _creatures.begin(); it != _creatures.end(); ++it)
     {
         save_context.writeUInt(it->first->getReferencingID(), "Creature referencingID");
@@ -1165,7 +1165,7 @@ bool Playground::save(SaveContext& save_context) const
     }
 
     //! Mapping of nodes to decoration
-    save_context.writeUInt(_nodes_to_decoration.size(), "_nodes_to_decoration.size()");
+    save_context.writeUInt(uint(_nodes_to_decoration.size()), "_nodes_to_decoration.size()");
     for (map<NodeID, Decoration*>::const_iterator it = _nodes_to_decoration.begin(); it != _nodes_to_decoration.end(); ++it)
     {
         it->first.save(save_context);

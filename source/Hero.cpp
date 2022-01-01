@@ -265,8 +265,8 @@ bool Hero::save(SaveContext& save_context) const
     _inventory.save(save_context);
 
     // spells
-    save_context.writeUInt(_spell_families.size(), "_spell_families.size()");
-    for (uint i = 0; i < _spell_families.size(); ++i)
+    save_context.writeUInt(uint(_spell_families.size()), "_spell_families.size()");
+    for (size_t i = 0; i < _spell_families.size(); ++i)
     {
         uint spell_family_uint = (uint) (_spell_families[i]);
         QString i_str;

@@ -7,7 +7,7 @@
 using namespace std;
 
 
-Level01TheProbation::Level01TheProbation(uint num_heroes)
+Level01TheProbation::Level01TheProbation(size_t num_heroes)
 :
         Level(num_heroes)
 {
