@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"memory": "cpp",
+			"qtime": "cpp",
+			"qelapsedtimer": "cpp",
+			"fstream": "cpp",
+			"qstylefactory": "cpp",
+			"vector": "cpp"
+		}
+	}
+}
