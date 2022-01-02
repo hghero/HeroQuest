@@ -13,13 +13,13 @@ As I don't have much time to push this project, progress is being made very slow
 Currently only the first two levels are playable.
 
 # Work and compile
-- development: VS Code
-- compile and link: Visual Studio 2022 compiler and linker (used only from the command line) 
-- further libs: Qt 6.2.2
-- I use my own Makefile for compilation and stuff.
+* see "/howto_config/Howto install.txt" on hints how to configure your environment to be able to compile and debug this package
+* current tools:
+** development and debugging: VS Code
+** compile and link: Visual Studio 2022 compiler and linker (used only from the command line via Makefile)
+** further libs: Qt 6.2.2
 
 # Version History
-210116 Initial import.
-210523 Level 2, equipment cards, buy equipment after level finish.
-211231 Use VS Code instead of Eclipse CDT, switch to 64 bit compilation, update from Qt5 to Qt6,
-       remove boost, switch to 2022 compiler, switch to C++17.
+- 210116 Initial import.
+- 210523 Level 2, equipment cards, buy equipment after level finish.
+- 211231 Use VS Code instead of Eclipse CDT, switch to 64 bit compilation, update from Qt5 to Qt6, remove boost, switch to 2022 compiler, switch to C++17.

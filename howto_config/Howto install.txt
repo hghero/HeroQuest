@@ -1,5 +1,7 @@
 install Visual Studio Community 2022
 
+install Cygwin (we need make.exe)
+
 download QT 6.2.2 (requires you to create a Qt account); required (1.9 GB):
 * Qt / Qt6.2.2 / MSVC 2019, 64-bit
 * Qt / Qt6.2.2 / Additional Libraries / Qt Image Formats
@@ -7,11 +9,12 @@ download QT 6.2.2 (requires you to create a Qt account); required (1.9 GB):
 
 install VS Code 1.63.2
 
-adjust paths in file "vscode-config-hq.cmd"
+adjust paths in file "/howto_config/vscode-config-hq.cmd"
 
 create a cmd console link which initializes the environment, e.g.:
-	C:\Windows\System32\cmd.exe /K e:\Programmieren\vscode-config-hq.cmd
+* C:\Windows\System32\cmd.exe /K e:\Programmieren\vscode-config-hq.cmd
+** run this link; from the opening console, open VS Code to have all environment variables set correctly
 	
 in VS Code:
-	install extension C/C++ IntelliSense
-	adjust c_cpp_properties configuration (compilerPath)
+* install extension C/C++ IntelliSense
+* adjust c_cpp_properties configuration (compilerPath)
