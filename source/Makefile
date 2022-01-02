@@ -43,6 +43,28 @@ endif
 
 # ===============================================================
 
+ifeq (X$(WINDOWS_UCRT_INCLUDE),X)
+  $(error Set environment variable WINDOWS_UCRT_INCLUDE, e.g. \"C:/Program Files (x86)/Windows Kits/10/Include/10.0.19041.0/ucrt/x64\")
+endif
+
+ifeq (X$(WINDOWS_UM_INCLUDE),X)
+  $(error Set environment variable WINDOWS_UM_INCLUDE, e.g. \"C:/Program Files (x86)/Windows Kits/10/Include/10.0.19041.0/um/x64\")
+endif
+
+ifeq (X$(WINDOWS_SHARED_INCLUDE),X)
+  $(error Set environment variable WINDOWS_SHARED_INCLUDE, e.g. \"C:/Program Files (x86)/Windows Kits/10/Include/10.0.19041.0/shared/x64\")
+endif
+
+ifeq (X$(WINDOWS_UCRT_LIBPATH),X)
+  $(error Set environment variable WINDOWS_UCRT_LIBPATH, e.g. \"C:/Program Files (x86)/Windows Kits/10/Lib/10.0.19041.0/ucrt/x64\")
+endif
+
+ifeq (X$(WINDOWS_UM_LIBPATH),X)
+  $(error Set environment variable WINDOWS_UM_LIBPATH, e.g. \"C:/Program Files (x86)/Windows Kits/10/Lib/10.0.19041.0/um/x64\")
+endif
+
+# ===============================================================
+
 ifeq ($(TARGET_MODE),RELEASE)
   TARGET_DIR = release
 else
@@ -87,7 +109,7 @@ PRECOMPILE = moc.exe
 RCCCOMPILE = rcc.exe
 
 COMPILE = cl.exe
-ADDITIONAL_INCLUDES = /I$(QT_PATH)/include /I"C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\ucrt" /I"C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\um" /I"C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\shared"
+ADDITIONAL_INCLUDES = /I$(QT_PATH)/include /I$(WINDOWS_UCRT_INCLUDE) /I$(WINDOWS_UM_INCLUDE) /I$(WINDOWS_SHARED_INCLUDE)
 
 # compile options explained:
 #   "/std:c++17", // C++ 17 standard
@@ -126,7 +148,7 @@ endif
 
 LINK = link.exe
 LINK_TARGET = /OUT:"$(TARGET)"
-LINK_OPTIONS = /MACHINE:X64 /INCREMENTAL:NO /NOLOGO /SUBSYSTEM:CONSOLE /OPT:REF /OPT:ICF /ALLOWISOLATION /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /ERRORREPORT:QUEUE /DEBUG /LIBPATH:$(QT_LIBPATH) /LIBPATH:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\ucrt\x64" /LIBPATH:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64"
+LINK_OPTIONS = /MACHINE:X64 /INCREMENTAL:NO /NOLOGO /SUBSYSTEM:CONSOLE /OPT:REF /OPT:ICF /ALLOWISOLATION /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /ERRORREPORT:QUEUE /DEBUG /LIBPATH:$(QT_LIBPATH) /LIBPATH:$(WINDOWS_UCRT_LIBPATH) /LIBPATH:$(WINDOWS_UM_LIBPATH)
 LINK_LIBS = Qt6Cored.lib \
             Qt6Guid.lib \
             Qt6Widgetsd.lib \

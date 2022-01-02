@@ -573,7 +573,7 @@ void HeroQuestLevelWindow::removeHeroStatisticPane(const Hero* hero)
 
 #ifdef DEBUG_PANE_SIZES
     DVX(("================================================="));
-    DVX(("removeHeroStatisticPane(%s)", qPrintable(hero->getName())));
+    DVX(("removeHeroStatisticPane()"));
     DVX(("-------------------------------------------------"));
     DVX(("_info_pane->layout() content before remove = %d", LayoutHelper::getNumWidgets(_info_pane->layout())));
 #endif
@@ -940,17 +940,16 @@ bool HeroQuestLevelWindow::loadGame(const QString& filename)
 
         // update heroes from camp
         _hero_camp.getHeroes(&_heroes);
-        _level->setActingHeroes(_heroes);
 
-        // hero static panes
-        addInfoPaneToCentralWidget();
-        addHeroStatisticPanes();
-
-        if (!load(load_context))
+        if (!load(load_context)) // this is required to set level->_acting_heroes correctly before creating the statistic panes
         {
             DVX(("Could not load game from file \"%s\".", qPrintable(filename_local)));
             return false;
         }
+
+        // hero static panes
+        addInfoPaneToCentralWidget();
+        addHeroStatisticPanes();
 
         DV(("HeroQuestLevelWindow::loadGame: loadImagesAndAdjustPointers"));
         if (!loadImagesAndAdjustPointers())
@@ -1779,6 +1778,8 @@ void HeroQuestLevelWindow::startGame(const QString& filename)
 
 /*!
  * Adds hero statistic panes to the info area.
+ *
+ * Requires that _level->_acting_heroes is set already.
  */
 void HeroQuestLevelWindow::addHeroStatisticPanes()
 {
@@ -1806,11 +1807,9 @@ void HeroQuestLevelWindow::addHeroStatisticPanes()
 #endif
 
     // --- add statistic panes to the info area ---
-    for (size_t i = 0; i < getHeroes().size(); ++i) // cannot use _level->getActingHeroes() here, because the level doesn't exist yet
+    for (vector<Hero*>::const_iterator it_hero = _level->getActingHeroes().begin(); it_hero != _level->getActingHeroes().end(); ++it_hero)
     {
-        Hero* hero = getHeroes()[i];
-
-        addHeroStatisticPane(hero);
+        addHeroStatisticPane(*it_hero);
     }
 
     adjustInfoPaneHeight();

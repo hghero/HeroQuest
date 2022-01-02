@@ -19,6 +19,13 @@ doskey ls=dir /W
 rem ----------- debug -----------
 set _NT_SYMBOL_PATH=%_NT_SYMBOL_PATH%;"E:\Programmieren\HeroQuest\execute\pdb";%QT_PATH_BACKSLASH%\bin
 
+rem ----------- Windows -----------
+set WINDOWS_UCRT_INCLUDE="C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\ucrt"
+set WINDOWS_UM_INCLUDE="C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\um"
+set WINDOWS_SHARED_INCLUDE="C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\shared"
+set WINDOWS_UCRT_LIBPATH="C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\ucrt\x64"
+set WINDOWS_UM_LIBPATH="C:\Program Files (x86)\Windows Kits\10\Lib\10.0.19041.0\um\x64"
+
 rem ----------- VS Code -----------
 set WORKSPACE_DIR=e:/Programmieren/HeroQuest
 set TARGET_MODE=DEBUG
